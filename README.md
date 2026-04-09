@@ -1,2 +1,79 @@
 # reddit-digest-agent
-reddit-digest-agent is a lightweight, agent-driven tool that collects top posts from selected Reddit communities and delivers a curated daily digest directly to Telegram.  The project is designed as a modular pipeline where data sources, filtering logic, summarization, and delivery channels are decoupled and extensible.
+
+An AI-powered agent that delivers a daily digest of Reddit's top posts to your Telegram channel. It summarizes content in your language, and learns your preferences over time through reaction buttons.
+
+## What it does
+
+- Collects top posts from configurable subreddits on a cron schedule
+- Summarizes each post using any OpenAI-compatible LLM (OpenAI, LocalAI, OpenRouter, etc.)
+- Sends summaries to Telegram with inline reaction buttons
+- Learns from your feedback to filter future content
+
+## Prerequisites
+
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) package manager
+- A [Reddit API](https://www.reddit.com/prefs/apps) app (script type)
+- A [Telegram Bot](https://core.telegram.org/bots#botfather) token + your chat ID
+- Access to an OpenAI-compatible LLM API
+
+## Quick start
+
+```bash
+git clone https://github.com/using-system/reddit-digest-agent.git
+cd reddit-digest-agent
+uv sync
+cp .env.example .env
+# Edit .env with your credentials
+uv run python -m reddit_digest.main
+```
+
+## Configuration
+
+All configuration is done via environment variables (`.env` file).
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `REDDIT_CLIENT_ID` | yes | | Reddit API client ID |
+| `REDDIT_CLIENT_SECRET` | yes | | Reddit API client secret |
+| `REDDIT_USER_AGENT` | no | `reddit-digest-agent` | Reddit API user agent |
+| `REDDIT_SUBREDDITS` | no | `["python","machinelearning","selfhosted"]` | JSON list of subreddits |
+| `REDDIT_SORT` | no | `hot` | Sort method: `hot`, `top`, `rising`, `new` |
+| `REDDIT_LIMIT` | no | `20` | Max posts per subreddit |
+| `REDDIT_TIME_FILTER` | no | `day` | Time filter for `top` sort |
+| `LLM_API_KEY` | yes | | API key for the LLM provider |
+| `LLM_BASE_URL` | no | `http://localhost:8080/v1` | OpenAI-compatible API endpoint |
+| `LLM_MODEL` | no | `gpt-4o-mini` | Model name |
+| `TELEGRAM_BOT_TOKEN` | yes | | Telegram bot token from BotFather |
+| `TELEGRAM_CHAT_ID` | yes | | Target chat/channel ID |
+| `DIGEST_CRON` | no | `0 8 * * *` | Cron expression for digest schedule |
+| `DIGEST_LANGUAGE` | no | `fr` | Summary language |
+
+## Deploy with Docker
+
+```dockerfile
+FROM python:3.12-slim
+WORKDIR /app
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY . .
+RUN uv sync --no-dev
+CMD ["uv", "run", "python", "-m", "reddit_digest.main"]
+```
+
+```bash
+docker build -t reddit-digest-agent .
+docker run -d --env-file .env --name reddit-digest reddit-digest-agent
+```
+
+## Development
+
+```bash
+uv sync --all-extras          # install with dev deps
+uv run pytest                 # run tests (44 tests)
+uv run ruff check src/ tests/ # lint
+uv run ruff format src/ tests/ # format
+```
+
+## License
+
+Apache 2.0
