@@ -1,0 +1,43 @@
+[project]
+name = "reddit-digest-agent"
+version = "0.1.0"
+description = "Agent-driven Reddit digest delivered to Telegram"
+requires-python = ">=3.11"
+dependencies = [
+    "langchain-openai",
+    "langgraph",
+    "asyncpraw",
+    "python-telegram-bot",
+    "apscheduler>=3.10,<4",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "pyyaml",
+    "python-dotenv",
+    "aiosqlite",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "ruff",
+]
+
+[project.scripts]
+reddit-digest = "reddit_digest.main:main_sync"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/reddit_digest"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+src = ["src", "tests"]

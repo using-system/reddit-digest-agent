@@ -8,4 +8,18 @@ reddit-digest-agent is a Python-based, agent-driven tool that collects top posts
 
 ## Development Setup
 
-This is a Python project (see `.gitignore` for tooling hints: uv/pip/poetry compatible). No source code exists yet beyond the initial commit — the project is in bootstrap phase.
+- Package manager: uv
+- Python >=3.11 (src layout: `src/reddit_digest/`)
+
+## Development Commands
+
+- `uv sync --all-extras` — install all dependencies
+- `uv run pytest` — run all tests
+- `uv run pytest -v --tb=short` — verbose test output
+- `uv run ruff check src/ tests/` — lint
+- `uv run python -m reddit_digest.main` — run the agent
+
+## Architecture
+
+Two LangGraph graphs (Digest + Feedback) sharing SQLite state.
+See SPEC.md and `docs/superpowers/specs/` for full design spec.
