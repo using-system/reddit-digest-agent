@@ -7,7 +7,7 @@ from typing import Any
 import aiosqlite
 from langchain_openai import ChatOpenAI
 
-from reddit_digest.config import AppConfig, SecretsConfig
+from reddit_digest.config import Settings
 from reddit_digest.db import get_post_by_message_id, update_preference
 
 logger = logging.getLogger(__name__)
@@ -39,9 +39,7 @@ async def receive_reaction(
     return {"post_metadata": post_meta.model_dump()}
 
 
-async def analyze_reaction(
-    state: dict[str, Any], config: AppConfig, secrets: SecretsConfig
-) -> dict[str, Any]:
+async def analyze_reaction(state: dict[str, Any], settings: Settings) -> dict[str, Any]:
     post_meta = state["post_metadata"]
     reaction_type = state["reaction_type"]
 
@@ -51,9 +49,9 @@ async def analyze_reaction(
     score_delta = SCORE_DELTAS.get(reaction_type, 0)
 
     llm = ChatOpenAI(
-        base_url=config.llm.base_url,
-        model=config.llm.model,
-        api_key=secrets.llm_api_key,
+        base_url=settings.llm_base_url,
+        model=settings.llm_model,
+        api_key=settings.llm_api_key,
     )
 
     try:

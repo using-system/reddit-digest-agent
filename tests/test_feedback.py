@@ -60,7 +60,7 @@ async def test_receive_reaction_not_found(db_conn):
     assert result["post_metadata"] == {}
 
 
-async def test_analyze_reaction_more(mock_llm, sample_config, sample_secrets):
+async def test_analyze_reaction_more(mock_llm, settings):
     state = {
         "message_id": 1,
         "reaction_type": "more",
@@ -72,12 +72,12 @@ async def test_analyze_reaction_more(mock_llm, sample_config, sample_secrets):
         },
         "preference_update": {},
     }
-    result = await analyze_reaction(state, sample_config, sample_secrets)
+    result = await analyze_reaction(state, settings)
     assert result["preference_update"]["score_delta"] == 1
     assert result["preference_update"]["topics"] == ["web", "frameworks"]
 
 
-async def test_analyze_reaction_irrelevant(mock_llm, sample_config, sample_secrets):
+async def test_analyze_reaction_irrelevant(mock_llm, settings):
     state = {
         "message_id": 1,
         "reaction_type": "irrelevant",
@@ -89,11 +89,11 @@ async def test_analyze_reaction_irrelevant(mock_llm, sample_config, sample_secre
         },
         "preference_update": {},
     }
-    result = await analyze_reaction(state, sample_config, sample_secrets)
+    result = await analyze_reaction(state, settings)
     assert result["preference_update"]["score_delta"] == -2
 
 
-async def test_analyze_reaction_llm_error(mock_llm, sample_config, sample_secrets):
+async def test_analyze_reaction_llm_error(mock_llm, settings):
     mock_llm.ainvoke = AsyncMock(side_effect=Exception("LLM down"))
     state = {
         "message_id": 1,
@@ -106,7 +106,7 @@ async def test_analyze_reaction_llm_error(mock_llm, sample_config, sample_secret
         },
         "preference_update": {},
     }
-    result = await analyze_reaction(state, sample_config, sample_secrets)
+    result = await analyze_reaction(state, settings)
     assert result["preference_update"]["topics"] == ["tech"]
     assert result["preference_update"]["score_delta"] == -1
 

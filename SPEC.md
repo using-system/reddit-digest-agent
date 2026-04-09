@@ -24,5 +24,5 @@ Two LangGraph graphs sharing SQLite state:
 | Scheduler | APScheduler |
 | Storage | SQLite |
 | Telegram | python-telegram-bot |
-| Config | YAML + .env |
+| Config | Environment variables (.env) |
 | Tests | pytest + pytest-asyncio |

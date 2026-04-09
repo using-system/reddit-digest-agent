@@ -1,6 +1,6 @@
 import pytest
 
-from reddit_digest.config import AppConfig, SecretsConfig
+from reddit_digest.config import Settings
 from reddit_digest.db import init_db
 
 
@@ -12,27 +12,21 @@ async def db_conn():
 
 
 @pytest.fixture
-def sample_config() -> AppConfig:
-    return AppConfig(
-        reddit={
-            "subreddits": ["python", "machinelearning"],
-            "sort": "hot",
-            "limit": 10,
-            "time_filter": "day",
-        },
-        llm={"base_url": "http://localhost:8080/v1", "model": "test-model"},
-        telegram={"chat_id": "123"},
-        digest={"schedule": "08:00", "timezone": "UTC", "language": "fr"},
-    )
-
-
-@pytest.fixture
-def sample_secrets() -> SecretsConfig:
-    return SecretsConfig(
+def settings() -> Settings:
+    return Settings(
         reddit_client_id="test-id",
         reddit_client_secret="test-secret",
         reddit_user_agent="test-agent",
-        telegram_bot_token="bot:test-token",
+        reddit_subreddits=["python", "machinelearning"],
+        reddit_sort="hot",
+        reddit_limit=10,
+        reddit_time_filter="day",
         llm_api_key="sk-test",
+        llm_base_url="http://localhost:8080/v1",
+        llm_model="test-model",
+        telegram_bot_token="bot:test-token",
+        telegram_chat_id="123",
+        digest_cron="0 8 * * *",
+        digest_language="fr",
         _env_file=None,
     )

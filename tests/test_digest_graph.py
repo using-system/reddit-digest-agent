@@ -49,7 +49,7 @@ def mock_bot():
 
 
 async def test_digest_graph_full_flow(
-    mock_reddit, mock_llm, mock_bot, db_conn, sample_config, sample_secrets
+    mock_reddit, mock_llm, mock_bot, db_conn, settings
 ):
     submissions = [_make_submission("g1")]
     sub_obj = AsyncMock()
@@ -61,7 +61,7 @@ async def test_digest_graph_full_flow(
     sub_obj.hot = fake_hot
     mock_reddit.subreddit = AsyncMock(return_value=sub_obj)
 
-    graph = build_digest_graph(sample_config, sample_secrets, db_conn)
+    graph = build_digest_graph(settings, db_conn)
     result = await graph.ainvoke({"subreddits": ["python"]})
 
     assert len(result["raw_posts"]) == 1
@@ -71,7 +71,7 @@ async def test_digest_graph_full_flow(
 
 
 async def test_digest_graph_empty_subreddit(
-    mock_reddit, mock_llm, mock_bot, db_conn, sample_config, sample_secrets
+    mock_reddit, mock_llm, mock_bot, db_conn, settings
 ):
     sub_obj = AsyncMock()
 
@@ -82,7 +82,7 @@ async def test_digest_graph_empty_subreddit(
     sub_obj.hot = fake_hot
     mock_reddit.subreddit = AsyncMock(return_value=sub_obj)
 
-    graph = build_digest_graph(sample_config, sample_secrets, db_conn)
+    graph = build_digest_graph(settings, db_conn)
     result = await graph.ainvoke({"subreddits": ["empty"]})
 
     assert result["raw_posts"] == []

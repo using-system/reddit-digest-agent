@@ -45,7 +45,7 @@ def test_build_keyboard():
     assert buttons[2].callback_data == "irrelevant:abc123"
 
 
-async def test_deliver_summaries(db_conn, sample_config, sample_secrets):
+async def test_deliver_summaries(db_conn, settings):
     fake_msg = MagicMock()
     fake_msg.message_id = 100
 
@@ -58,7 +58,7 @@ async def test_deliver_summaries(db_conn, sample_config, sample_secrets):
             "summaries": [_summary("p1")],
             "filtered_posts": [_post("p1")],
         }
-        result = await deliver_summaries(state, sample_config, sample_secrets, db_conn)
+        result = await deliver_summaries(state, settings, db_conn)
 
     assert result["delivered_ids"] == ["100"]
     bot_instance.send_message.assert_called_once()
@@ -67,7 +67,7 @@ async def test_deliver_summaries(db_conn, sample_config, sample_secrets):
     assert call_kwargs["parse_mode"] == "HTML"
 
 
-async def test_deliver_summaries_empty(db_conn, sample_config, sample_secrets):
+async def test_deliver_summaries_empty(db_conn, settings):
     state = {"summaries": [], "filtered_posts": []}
-    result = await deliver_summaries(state, sample_config, sample_secrets, db_conn)
+    result = await deliver_summaries(state, settings, db_conn)
     assert result["delivered_ids"] == []

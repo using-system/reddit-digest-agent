@@ -28,12 +28,12 @@ def mock_llm():
         yield instance
 
 
-async def test_feedback_graph_more(mock_llm, db_conn, sample_config, sample_secrets):
+async def test_feedback_graph_more(mock_llm, db_conn, settings):
     await save_sent_post(
         db_conn, _post(), telegram_message_id=600, category="tech", keywords=["python"]
     )
 
-    graph = build_feedback_graph(sample_config, sample_secrets, db_conn)
+    graph = build_feedback_graph(settings, db_conn)
     await graph.ainvoke(
         {
             "message_id": 600,
@@ -47,14 +47,12 @@ async def test_feedback_graph_more(mock_llm, db_conn, sample_config, sample_secr
     assert await get_preference_score(db_conn, "python", "api") == 1
 
 
-async def test_feedback_graph_irrelevant(
-    mock_llm, db_conn, sample_config, sample_secrets
-):
+async def test_feedback_graph_irrelevant(mock_llm, db_conn, settings):
     await save_sent_post(
         db_conn, _post(), telegram_message_id=601, category="tech", keywords=["python"]
     )
 
-    graph = build_feedback_graph(sample_config, sample_secrets, db_conn)
+    graph = build_feedback_graph(settings, db_conn)
     await graph.ainvoke(
         {
             "message_id": 601,
@@ -68,12 +66,12 @@ async def test_feedback_graph_irrelevant(
     assert await get_preference_score(db_conn, "python", "api") == -2
 
 
-async def test_feedback_graph_less(mock_llm, db_conn, sample_config, sample_secrets):
+async def test_feedback_graph_less(mock_llm, db_conn, settings):
     await save_sent_post(
         db_conn, _post(), telegram_message_id=602, category="tech", keywords=["python"]
     )
 
-    graph = build_feedback_graph(sample_config, sample_secrets, db_conn)
+    graph = build_feedback_graph(settings, db_conn)
     await graph.ainvoke(
         {
             "message_id": 602,

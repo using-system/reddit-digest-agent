@@ -6,7 +6,7 @@ from typing import Any
 
 from langchain_openai import ChatOpenAI
 
-from reddit_digest.config import AppConfig, SecretsConfig
+from reddit_digest.config import Settings
 from reddit_digest.models import RedditPost, Summary
 
 logger = logging.getLogger(__name__)
@@ -21,24 +21,22 @@ Respond ONLY with valid JSON (no markdown, no code fences):
 {{"summary": "a concise summary in {language}", "category": "single-word category", "keywords": ["keyword1", "keyword2", "keyword3"]}}"""
 
 
-async def summarize_posts(
-    state: dict[str, Any], config: AppConfig, secrets: SecretsConfig
-) -> dict[str, Any]:
+async def summarize_posts(state: dict[str, Any], settings: Settings) -> dict[str, Any]:
     filtered_posts: list[RedditPost] = state["filtered_posts"]
     if not filtered_posts:
         return {"summaries": []}
 
     llm = ChatOpenAI(
-        base_url=config.llm.base_url,
-        model=config.llm.model,
-        api_key=secrets.llm_api_key,
+        base_url=settings.llm_base_url,
+        model=settings.llm_model,
+        api_key=settings.llm_api_key,
     )
 
     summaries: list[Summary] = []
     for post in filtered_posts:
         try:
             prompt = PROMPT_TEMPLATE.format(
-                language=config.digest.language,
+                language=settings.digest_language,
                 subreddit=post.subreddit,
                 title=post.title,
                 selftext=post.selftext[:2000],

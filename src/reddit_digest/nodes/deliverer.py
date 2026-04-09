@@ -6,7 +6,7 @@ from typing import Any
 import aiosqlite
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 
-from reddit_digest.config import AppConfig, SecretsConfig
+from reddit_digest.config import Settings
 from reddit_digest.db import save_sent_post
 from reddit_digest.models import Summary
 
@@ -40,26 +40,24 @@ def _build_keyboard(reddit_id: str) -> InlineKeyboardMarkup:
 
 async def deliver_summaries(
     state: dict[str, Any],
-    config: AppConfig,
-    secrets: SecretsConfig,
+    settings: Settings,
     conn: aiosqlite.Connection,
 ) -> dict[str, Any]:
     summaries: list[Summary] = state["summaries"]
     if not summaries:
         return {"delivered_ids": []}
 
-    bot = Bot(token=secrets.telegram_bot_token)
+    bot = Bot(token=settings.telegram_bot_token)
 
     delivered_ids: list[str] = []
     for summary in summaries:
         try:
             msg = await bot.send_message(
-                chat_id=config.telegram.chat_id,
+                chat_id=settings.telegram_chat_id,
                 text=_format_message(summary),
                 reply_markup=_build_keyboard(summary.reddit_id),
                 parse_mode="HTML",
             )
-            # Find matching post from filtered_posts to save
             matching_post = None
             for post in state.get("filtered_posts", []):
                 if post.reddit_id == summary.reddit_id:

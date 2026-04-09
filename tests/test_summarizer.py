@@ -40,37 +40,33 @@ def mock_llm():
         yield instance
 
 
-async def test_summarize_posts_basic(mock_llm, sample_config, sample_secrets):
+async def test_summarize_posts_basic(mock_llm, settings):
     state = {"filtered_posts": [_post()]}
-    result = await summarize_posts(state, sample_config, sample_secrets)
+    result = await summarize_posts(state, settings)
     assert len(result["summaries"]) == 1
     assert result["summaries"][0].summary_text == "Résumé du post"
     assert result["summaries"][0].category == "tech"
     assert result["summaries"][0].reddit_id == "p1"
 
 
-async def test_summarize_posts_empty(mock_llm, sample_config, sample_secrets):
+async def test_summarize_posts_empty(mock_llm, settings):
     state = {"filtered_posts": []}
-    result = await summarize_posts(state, sample_config, sample_secrets)
+    result = await summarize_posts(state, settings)
     assert result["summaries"] == []
     mock_llm.ainvoke.assert_not_called()
 
 
-async def test_summarize_posts_llm_error_graceful(
-    mock_llm, sample_config, sample_secrets
-):
+async def test_summarize_posts_llm_error_graceful(mock_llm, settings):
     mock_llm.ainvoke = AsyncMock(side_effect=[_llm_response(), Exception("LLM error")])
     state = {"filtered_posts": [_post("p1"), _post("p2")]}
-    result = await summarize_posts(state, sample_config, sample_secrets)
+    result = await summarize_posts(state, settings)
     assert len(result["summaries"]) == 1
     assert result["summaries"][0].reddit_id == "p1"
 
 
-async def test_summarize_posts_uses_configured_language(
-    mock_llm, sample_config, sample_secrets
-):
-    sample_config.digest.language = "en"
+async def test_summarize_posts_uses_configured_language(mock_llm, settings):
+    settings.digest_language = "en"
     state = {"filtered_posts": [_post()]}
-    await summarize_posts(state, sample_config, sample_secrets)
+    await summarize_posts(state, settings)
     call_args = mock_llm.ainvoke.call_args[0][0]
     assert "en" in call_args

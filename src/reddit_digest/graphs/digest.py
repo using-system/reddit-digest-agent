@@ -5,7 +5,7 @@ from typing import Any, TypedDict
 import aiosqlite
 from langgraph.graph import END, START, StateGraph
 
-from reddit_digest.config import AppConfig, SecretsConfig
+from reddit_digest.config import Settings
 from reddit_digest.models import RedditPost, Summary
 from reddit_digest.nodes.collector import collect_posts
 from reddit_digest.nodes.deliverer import deliver_summaries
@@ -21,20 +21,18 @@ class DigestState(TypedDict, total=False):
     delivered_ids: list[str]
 
 
-def build_digest_graph(
-    config: AppConfig, secrets: SecretsConfig, conn: aiosqlite.Connection
-):
+def build_digest_graph(settings: Settings, conn: aiosqlite.Connection):
     async def collector_node(state: dict[str, Any]) -> dict[str, Any]:
-        return await collect_posts(state, config, secrets)
+        return await collect_posts(state, settings)
 
     async def filterer_node(state: dict[str, Any]) -> dict[str, Any]:
         return await filter_posts(state, conn)
 
     async def summarizer_node(state: dict[str, Any]) -> dict[str, Any]:
-        return await summarize_posts(state, config, secrets)
+        return await summarize_posts(state, settings)
 
     async def deliverer_node(state: dict[str, Any]) -> dict[str, Any]:
-        return await deliver_summaries(state, config, secrets, conn)
+        return await deliver_summaries(state, settings, conn)
 
     builder = StateGraph(DigestState)
     builder.add_node("collector", collector_node)

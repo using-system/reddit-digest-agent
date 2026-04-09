@@ -6,7 +6,7 @@ import logging
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 
-from reddit_digest.config import load_config, load_secrets
+from reddit_digest.config import load_settings
 from reddit_digest.db import init_db
 from reddit_digest.graphs.digest import build_digest_graph
 from reddit_digest.graphs.feedback import build_feedback_graph
@@ -15,12 +15,13 @@ from reddit_digest.telegram.bot import create_bot
 logger = logging.getLogger(__name__)
 
 
-async def run_digest(config, secrets, db_conn) -> None:
+async def run_digest(settings, db_conn) -> None:
     logger.info("Running scheduled digest...")
-    graph = build_digest_graph(config, secrets, db_conn)
-    result = await graph.ainvoke({"subreddits": config.reddit.subreddits})
+    graph = build_digest_graph(settings, db_conn)
+    result = await graph.ainvoke({"subreddits": settings.reddit_subreddits})
     logger.info(
-        "Digest complete: delivered %d summaries", len(result.get("delivered_ids", []))
+        "Digest complete: delivered %d summaries",
+        len(result.get("delivered_ids", [])),
     )
 
 
@@ -30,28 +31,22 @@ async def main() -> None:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
 
-    config = load_config()
-    secrets = load_secrets()
+    settings = load_settings()
     db_conn = await init_db()
 
-    feedback_graph = build_feedback_graph(config, secrets, db_conn)
-    app = create_bot(secrets.telegram_bot_token, feedback_graph, db_conn)
+    feedback_graph = build_feedback_graph(settings, db_conn)
+    app = create_bot(settings.telegram_bot_token, feedback_graph, db_conn)
 
-    hour, minute = config.digest.schedule.split(":")
-    scheduler = AsyncIOScheduler(timezone=config.digest.timezone)
+    scheduler = AsyncIOScheduler()
     scheduler.add_job(
         run_digest,
-        CronTrigger(hour=int(hour), minute=int(minute)),
-        args=[config, secrets, db_conn],
+        CronTrigger.from_crontab(settings.digest_cron),
+        args=[settings, db_conn],
         id="daily_digest",
         name="Daily Reddit Digest",
     )
     scheduler.start()
-    logger.info(
-        "Scheduler started: digest at %s %s",
-        config.digest.schedule,
-        config.digest.timezone,
-    )
+    logger.info("Scheduler started: digest cron=%s", settings.digest_cron)
 
     async with app:
         await app.start()

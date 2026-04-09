@@ -5,7 +5,7 @@ from typing import Any, TypedDict
 import aiosqlite
 from langgraph.graph import END, START, StateGraph
 
-from reddit_digest.config import AppConfig, SecretsConfig
+from reddit_digest.config import Settings
 from reddit_digest.nodes.feedback import (
     analyze_reaction,
     receive_reaction,
@@ -20,14 +20,12 @@ class FeedbackState(TypedDict, total=False):
     preference_update: dict
 
 
-def build_feedback_graph(
-    config: AppConfig, secrets: SecretsConfig, conn: aiosqlite.Connection
-):
+def build_feedback_graph(settings: Settings, conn: aiosqlite.Connection):
     async def receive_node(state: dict[str, Any]) -> dict[str, Any]:
         return await receive_reaction(state, conn)
 
     async def analyze_node(state: dict[str, Any]) -> dict[str, Any]:
-        return await analyze_reaction(state, config, secrets)
+        return await analyze_reaction(state, settings)
 
     async def update_node(state: dict[str, Any]) -> dict[str, Any]:
         return await update_preferences(state, conn)

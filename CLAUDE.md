@@ -10,6 +10,7 @@ reddit-digest-agent is a Python-based, agent-driven tool that collects top posts
 
 - Package manager: uv
 - Python >=3.11 (src layout: `src/reddit_digest/`)
+- Configuration: all via environment variables (`.env` file). See `.env.example` for reference.
 
 ## Development Commands
 
@@ -17,9 +18,19 @@ reddit-digest-agent is a Python-based, agent-driven tool that collects top posts
 - `uv run pytest` — run all tests
 - `uv run pytest -v --tb=short` — verbose test output
 - `uv run ruff check src/ tests/` — lint
+- `uv run ruff format src/ tests/` — format
 - `uv run python -m reddit_digest.main` — run the agent
 
 ## Architecture
 
 Two LangGraph graphs (Digest + Feedback) sharing SQLite state.
+Single `Settings` class (pydantic-settings) loads all config from env vars.
+Scheduling uses a crontab expression (`DIGEST_CRON`).
 See SPEC.md and `docs/superpowers/specs/` for full design spec.
+
+## Post-Commit Workflow
+
+After each commit:
+1. Push the branch to the remote
+2. Create a PR if one does not already exist for the current branch
+3. Monitor the CI workflow run triggered by the push (`gh run watch`) and report the result

@@ -1456,7 +1456,6 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
     { name = "python-telegram-bot" },
-    { name = "pyyaml" },
 ]
 
 [package.optional-dependencies]
@@ -1481,7 +1480,6 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "python-dotenv" },
     { name = "python-telegram-bot" },
-    { name = "pyyaml" },
     { name = "ruff", marker = "extra == 'dev'" },
 ]
 provides-extras = ["dev"]

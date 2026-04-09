@@ -25,7 +25,7 @@ def mock_reddit():
         yield instance
 
 
-async def test_collect_posts_basic(mock_reddit, sample_config, sample_secrets):
+async def test_collect_posts_basic(mock_reddit, settings):
     submissions = [_make_submission(f"id{i}", "python") for i in range(3)]
 
     sub_obj = AsyncMock()
@@ -38,15 +38,15 @@ async def test_collect_posts_basic(mock_reddit, sample_config, sample_secrets):
     mock_reddit.subreddit = AsyncMock(return_value=sub_obj)
 
     state = {"subreddits": ["python"]}
-    result = await collect_posts(state, sample_config, sample_secrets)
+    result = await collect_posts(state, settings)
 
     assert len(result["raw_posts"]) == 3
     assert result["raw_posts"][0].reddit_id == "id0"
     assert result["raw_posts"][0].subreddit == "python"
 
 
-async def test_collect_posts_respects_limit(mock_reddit, sample_config, sample_secrets):
-    sample_config.reddit.limit = 2
+async def test_collect_posts_respects_limit(mock_reddit, settings):
+    settings.reddit_limit = 2
     submissions = [_make_submission(f"id{i}", "python") for i in range(5)]
 
     sub_obj = AsyncMock()
@@ -59,13 +59,11 @@ async def test_collect_posts_respects_limit(mock_reddit, sample_config, sample_s
     mock_reddit.subreddit = AsyncMock(return_value=sub_obj)
 
     state = {"subreddits": ["python"]}
-    result = await collect_posts(state, sample_config, sample_secrets)
+    result = await collect_posts(state, settings)
     assert len(result["raw_posts"]) == 2
 
 
-async def test_collect_posts_error_in_one_subreddit(
-    mock_reddit, sample_config, sample_secrets
-):
+async def test_collect_posts_error_in_one_subreddit(mock_reddit, settings):
     good_submissions = [_make_submission("good1", "python")]
 
     sub_good = AsyncMock()
@@ -87,13 +85,13 @@ async def test_collect_posts_error_in_one_subreddit(
     mock_reddit.subreddit = AsyncMock(side_effect=fake_subreddit)
 
     state = {"subreddits": ["python", "badsubreddit"]}
-    result = await collect_posts(state, sample_config, sample_secrets)
+    result = await collect_posts(state, settings)
     assert len(result["raw_posts"]) == 1
 
 
-async def test_collect_posts_top_sort(mock_reddit, sample_config, sample_secrets):
-    sample_config.reddit.sort = "top"
-    sample_config.reddit.time_filter = "week"
+async def test_collect_posts_top_sort(mock_reddit, settings):
+    settings.reddit_sort = "top"
+    settings.reddit_time_filter = "week"
     submissions = [_make_submission("t1", "python")]
 
     sub_obj = AsyncMock()
@@ -108,6 +106,6 @@ async def test_collect_posts_top_sort(mock_reddit, sample_config, sample_secrets
     mock_reddit.subreddit = AsyncMock(return_value=sub_obj)
 
     state = {"subreddits": ["python"]}
-    result = await collect_posts(state, sample_config, sample_secrets)
+    result = await collect_posts(state, settings)
     assert len(result["raw_posts"]) == 1
     assert calls[0]["time_filter"] == "week"
