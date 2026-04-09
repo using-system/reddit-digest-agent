@@ -51,15 +51,6 @@ All configuration is done via environment variables (`.env` file).
 
 ## Deploy with Docker
 
-```dockerfile
-FROM python:3.12-slim
-WORKDIR /app
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-COPY . .
-RUN uv sync --no-dev
-CMD ["uv", "run", "python", "-m", "reddit_digest.main"]
-```
-
 ```bash
 docker build -t reddit-digest-agent .
 docker run -d --env-file .env --name reddit-digest reddit-digest-agent
