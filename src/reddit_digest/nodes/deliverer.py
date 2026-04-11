@@ -10,6 +10,7 @@ from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 
 from reddit_digest.config import Settings
 from reddit_digest.models import RedditPost, Summary
+from reddit_digest.telemetry import get_meter
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,16 @@ async def deliver_summaries(
     settings: Settings,
     conn: aiosqlite.Connection,
 ) -> dict[str, Any]:
+    meter = get_meter("reddit_digest.deliverer")
+    sent_counter = meter.create_counter(
+        "reddit_digest.telegram.messages.sent",
+        description="Telegram messages sent",
+    )
+    error_counter = meter.create_counter(
+        "reddit_digest.telegram.messages.errors",
+        description="Telegram send errors",
+    )
+
     summaries: list[Summary] = state["summaries"]
     scored_posts: list[RedditPost] = state.get("scored_posts", [])
 
@@ -88,8 +99,10 @@ async def deliver_summaries(
                 parse_mode="HTML",
             )
             delivered_ids.append(str(msg.message_id))
+            sent_counter.add(1, {"subreddit": subreddit})
         except Exception:
             logger.exception("Failed to deliver digest for r/%s", subreddit)
+            error_counter.add(1)
 
     logger.info(
         "Delivered %d messages for %d subreddits",
