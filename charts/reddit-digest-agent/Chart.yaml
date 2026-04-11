@@ -1,0 +1,6 @@
+apiVersion: v2
+name: reddit-digest-agent
+description: Agent-driven Reddit digest delivered to Telegram
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
