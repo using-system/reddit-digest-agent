@@ -9,6 +9,7 @@ from langchain_openai import ChatOpenAI
 
 from reddit_digest.config import Settings
 from reddit_digest.db import get_post_by_message_id, update_preference
+from reddit_digest.telemetry import get_meter
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +94,13 @@ async def update_preferences(
 
     for topic in topics:
         await update_preference(conn, subreddit, topic, score_delta)
+
+    meter = get_meter("reddit_digest.feedback")
+    pref_counter = meter.create_counter(
+        "reddit_digest.feedback.preference_updates",
+        description="Preference updates from feedback",
+    )
+    pref_counter.add(1)
 
     logger.info(
         "Updated preferences for r/%s: %d topics, delta=%d",
