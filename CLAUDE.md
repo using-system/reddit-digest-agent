@@ -45,6 +45,10 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/) with semanti
 
 Format: `<type>(<scope>): <description>` — always try to include a scope (e.g. `feat(digest):`, `fix(telegram):`, `chore(ci):`)
 
+## Plan Execution
+
+Always use `superpowers:subagent-driven-development` when executing implementation plans. Never use inline execution.
+
 ## Post-Commit Workflow
 
 After each commit:
