@@ -49,6 +49,30 @@ cp .env.example .env
 docker run -d --env-file .env --name reddit-digest ghcr.io/using-system/reddit-digest-agent:latest
 ```
 
+### Helm (Kubernetes)
+
+A Helm chart is published to the GitHub Container Registry alongside each release:
+
+```bash
+helm install reddit-digest oci://ghcr.io/using-system/charts/reddit-digest-agent --version <version>
+```
+
+Create a Kubernetes Secret with your credentials, then reference it:
+
+```bash
+kubectl create secret generic reddit-digest-secrets \
+  --from-literal=OPENAI_API_KEY=<your-key> \
+  --from-literal=TELEGRAM_BOT_TOKEN=<your-token> \
+  --from-literal=TELEGRAM_CHAT_ID=<your-chat-id>
+
+helm install reddit-digest oci://ghcr.io/using-system/charts/reddit-digest-agent \
+  --set secret.existingSecret=reddit-digest-secrets \
+  --set config.DIGEST_CRON="0 8 * * *" \
+  --set config.DIGEST_LANGUAGE=en
+```
+
+See [`charts/reddit-digest-agent/values.yaml`](charts/reddit-digest-agent/values.yaml) for all available options.
+
 ### From source
 
 ```bash
