@@ -91,9 +91,7 @@ async def test_score_posts_llm_error_keeps_all(mock_llm, settings):
 
 
 async def test_score_posts_sets_relevance_score(mock_llm, settings):
-    mock_llm.ainvoke = AsyncMock(
-        return_value=_llm_scores_response({"p1": 9})
-    )
+    mock_llm.ainvoke = AsyncMock(return_value=_llm_scores_response({"p1": 9}))
 
     state = {"filtered_posts": [_post("p1")]}
     result = await score_posts(state, settings)

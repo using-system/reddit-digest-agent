@@ -125,9 +125,9 @@ async def test_collect_posts_fetches_comments(mock_session, settings):
     comments_resp = _make_comments_response(["Great post", "I agree", "Nice", "Meh"])
 
     mock_session.get.side_effect = [
-        _make_response([]),       # homepage
-        _make_response(posts),    # subreddit listing
-        comments_resp,            # comments for id1
+        _make_response([]),  # homepage
+        _make_response(posts),  # subreddit listing
+        comments_resp,  # comments for id1
     ]
 
     state = {"subreddits": ["python"]}

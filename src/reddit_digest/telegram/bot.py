@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 from telegram import Update
 from telegram.ext import Application, CallbackQueryHandler, ContextTypes
 
-from reddit_digest.db import get_post_by_message_id, save_reaction
+from reddit_digest.db import get_post_by_reddit_id, save_reaction
 
 if TYPE_CHECKING:
     import aiosqlite
@@ -42,9 +42,9 @@ def create_bot(
 
         message_id = query.message.message_id
 
-        post_meta = await get_post_by_message_id(db_conn, message_id)
+        post_meta = await get_post_by_reddit_id(db_conn, reddit_id)
         if not post_meta:
-            logger.warning("No post found for message_id=%d", message_id)
+            logger.warning("No post found for reddit_id=%s", reddit_id)
             return
 
         await save_reaction(db_conn, message_id, reaction_type)
@@ -54,12 +54,12 @@ def create_bot(
                 {
                     "message_id": message_id,
                     "reaction_type": reaction_type,
-                    "post_metadata": {},
+                    "post_metadata": post_meta.model_dump(),
                     "preference_update": {},
                 }
             )
         except Exception:
-            logger.exception("Feedback graph failed for message_id=%d", message_id)
+            logger.exception("Feedback graph failed for reddit_id=%s", reddit_id)
 
     app.add_handler(CallbackQueryHandler(handle_callback))
     return app

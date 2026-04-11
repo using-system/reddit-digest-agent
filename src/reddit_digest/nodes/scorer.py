@@ -67,9 +67,7 @@ async def score_posts(state: dict[str, Any], settings: Settings) -> dict[str, An
             data = json.loads(response.content)
             scores = data.get("scores", {})
         except Exception:
-            logger.exception(
-                "Failed to score posts for r/%s, keeping all", subreddit
-            )
+            logger.exception("Failed to score posts for r/%s, keeping all", subreddit)
             scored.extend(posts)
             continue
 

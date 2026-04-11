@@ -85,7 +85,7 @@ async def test_deliver_summaries_multiple_subreddits(db_conn, settings):
             "summaries": [_summary("p1", "python"), _summary("p2", "rust")],
             "scored_posts": [_post("p1", "python"), _post("p2", "rust")],
         }
-        result = await deliver_summaries(state, settings, db_conn)
+        await deliver_summaries(state, settings, db_conn)
 
     assert bot_instance.send_message.call_count == 2
 

@@ -54,7 +54,9 @@ async def test_digest_graph_full_flow(db_conn, settings):
     fake_msg.message_id = 42
 
     with (
-        patch("reddit_digest.nodes.collector.cffi_requests.Session") as mock_session_cls,
+        patch(
+            "reddit_digest.nodes.collector.cffi_requests.Session"
+        ) as mock_session_cls,
         patch("reddit_digest.nodes.scorer.ChatOpenAI") as mock_scorer_llm_cls,
         patch("reddit_digest.nodes.summarizer.ChatOpenAI") as mock_sum_llm_cls,
         patch("reddit_digest.nodes.deliverer.Bot") as mock_bot_cls,
@@ -95,7 +97,9 @@ async def test_digest_graph_no_relevant_posts(db_conn, settings):
     scores_resp = AIMessage(content=json.dumps({"scores": {"x1": 2}}))
 
     with (
-        patch("reddit_digest.nodes.collector.cffi_requests.Session") as mock_session_cls,
+        patch(
+            "reddit_digest.nodes.collector.cffi_requests.Session"
+        ) as mock_session_cls,
         patch("reddit_digest.nodes.scorer.ChatOpenAI") as mock_scorer_llm_cls,
         patch("reddit_digest.nodes.summarizer.ChatOpenAI") as mock_sum_llm_cls,
         patch("reddit_digest.nodes.deliverer.Bot") as mock_bot_cls,
@@ -120,7 +124,7 @@ async def test_digest_graph_no_relevant_posts(db_conn, settings):
         mock_bot_cls.return_value = bot
 
         graph = build_digest_graph(settings, db_conn)
-        result = await graph.ainvoke({"subreddits": ["python"]})
+        await graph.ainvoke({"subreddits": ["python"]})
 
     bot.send_message.assert_called_once()
     call_kwargs = bot.send_message.call_args.kwargs

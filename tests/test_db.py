@@ -2,6 +2,7 @@ import pytest
 
 from reddit_digest.db import (
     get_post_by_message_id,
+    get_post_by_reddit_id,
     get_preference_score,
     get_preferences,
     init_db,
@@ -58,6 +59,20 @@ async def test_save_seen_post_sent_status(db):
     row = await cursor.fetchone()
     assert row[0] == "sent"
     assert row[1] == 100
+
+
+async def test_get_post_by_reddit_id(db):
+    post = _make_post()
+    await save_seen_post(db, post, status="seen")
+    meta = await get_post_by_reddit_id(db, "abc123")
+    assert meta is not None
+    assert meta.reddit_id == "abc123"
+    assert meta.subreddit == "python"
+
+
+async def test_get_post_by_reddit_id_not_found(db):
+    meta = await get_post_by_reddit_id(db, "nonexistent")
+    assert meta is None
 
 
 async def test_get_post_by_message_id(db):

@@ -33,9 +33,7 @@ class Settings(BaseSettings):
     telegram_chat_id: str
 
     # Storage
-    db_path: str = str(
-        Path.home() / ".local" / "share" / "reddit-digest" / "digest.db"
-    )
+    db_path: str = str(Path.home() / ".local" / "share" / "reddit-digest" / "digest.db")
 
     # Rate limiting
     reddit_fetch_delay: int = 200

@@ -136,20 +136,16 @@ async def test_full_digest_then_feedback(mock_all, db_conn, settings):
     assert await is_post_seen(db_conn, "int1")
     assert await is_post_seen(db_conn, "int2")
 
-    # Link a post to the telegram message so the feedback graph can look it up
-    await db_conn.execute(
-        "UPDATE sent_posts SET telegram_message_id = ? WHERE reddit_id = ?",
-        (100, "int1"),
-    )
-    await db_conn.commit()
+    # Simulate "up" reaction — bot passes post_metadata pre-filled (looked up by reddit_id)
+    from reddit_digest.db import get_post_by_reddit_id
 
-    # Simulate "up" reaction on the message
+    post_meta = await get_post_by_reddit_id(db_conn, "int1")
     feedback_graph = build_feedback_graph(settings, db_conn)
     await feedback_graph.ainvoke(
         {
             "message_id": 100,
             "reaction_type": "up",
-            "post_metadata": {},
+            "post_metadata": post_meta.model_dump(),
             "preference_update": {},
         }
     )

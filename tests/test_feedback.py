@@ -35,7 +35,10 @@ def mock_llm():
 async def test_receive_reaction(db_conn):
     post = _post()
     await save_seen_post(
-        db_conn, post, telegram_message_id=500, status="sent",
+        db_conn,
+        post,
+        telegram_message_id=500,
+        status="sent",
     )
 
     state = {
@@ -47,6 +50,18 @@ async def test_receive_reaction(db_conn):
     result = await receive_reaction(state, db_conn)
     assert result["post_metadata"]["reddit_id"] == "fb1"
     assert result["post_metadata"]["subreddit"] == "python"
+
+
+async def test_receive_reaction_prefilled(db_conn):
+    """When bot passes post_metadata pre-filled, receive_reaction skips DB lookup."""
+    state = {
+        "message_id": 999,
+        "reaction_type": "up",
+        "post_metadata": {"reddit_id": "fb1", "subreddit": "python", "title": "Test"},
+        "preference_update": {},
+    }
+    result = await receive_reaction(state, db_conn)
+    assert result["post_metadata"]["reddit_id"] == "fb1"
 
 
 async def test_receive_reaction_not_found(db_conn):

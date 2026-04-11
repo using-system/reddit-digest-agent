@@ -107,6 +107,27 @@ async def get_post_by_message_id(
     )
 
 
+async def get_post_by_reddit_id(
+    conn: aiosqlite.Connection, reddit_id: str
+) -> PostMetadata | None:
+    cursor = await conn.execute(
+        """SELECT reddit_id, subreddit, title, url, category, keywords
+           FROM sent_posts WHERE reddit_id = ?""",
+        (reddit_id,),
+    )
+    row = await cursor.fetchone()
+    if row is None:
+        return None
+    return PostMetadata(
+        reddit_id=row[0],
+        subreddit=row[1],
+        title=row[2],
+        url=row[3],
+        category=row[4],
+        keywords=json.loads(row[5]),
+    )
+
+
 async def save_reaction(
     conn: aiosqlite.Connection, telegram_message_id: int, reaction_type: str
 ) -> None:

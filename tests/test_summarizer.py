@@ -34,7 +34,9 @@ def mock_llm():
 
 async def test_summarize_posts_batch(mock_llm, settings):
     mock_llm.ainvoke = AsyncMock(
-        return_value=_llm_response({"p1": "Résumé du post p1", "p2": "Résumé du post p2"})
+        return_value=_llm_response(
+            {"p1": "Résumé du post p1", "p2": "Résumé du post p2"}
+        )
     )
     state = {"scored_posts": [_post("p1"), _post("p2")]}
     result = await summarize_posts(state, settings)
@@ -75,9 +77,7 @@ async def test_summarize_posts_llm_error_graceful(mock_llm, settings):
 
 async def test_summarize_posts_uses_configured_language(mock_llm, settings):
     settings.digest_language = "en"
-    mock_llm.ainvoke = AsyncMock(
-        return_value=_llm_response({"p1": "English summary"})
-    )
+    mock_llm.ainvoke = AsyncMock(return_value=_llm_response({"p1": "English summary"}))
     state = {"scored_posts": [_post()]}
     await summarize_posts(state, settings)
     call_args = mock_llm.ainvoke.call_args[0][0]
