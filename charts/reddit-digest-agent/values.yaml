@@ -1,0 +1,40 @@
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  repository: ghcr.io/using-system/reddit-digest-agent
+  tag: ""
+  pullPolicy: IfNotPresent
+
+serviceAccount:
+  create: true
+  name: ""
+
+config:
+  REDDIT_SUBREDDITS: '["python","machinelearning","selfhosted"]'
+  REDDIT_SORT: hot
+  REDDIT_LIMIT: "5"
+  REDDIT_TIME_FILTER: day
+  DIGEST_CRON: "0 8 * * *"
+  DIGEST_LANGUAGE: fr
+  OPENAI_BASE_URL: https://openrouter.ai/api/v1
+  LLM_MODEL: google/gemini-2.5-flash
+
+secret:
+  create: false
+  existingSecret: ""
+  values:
+    OPENAI_API_KEY: ""
+    TELEGRAM_BOT_TOKEN: ""
+    TELEGRAM_CHAT_ID: ""
+
+persistence:
+  storageClassName: ""
+  size: 1Gi
+  accessModes:
+    - ReadWriteOnce
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
