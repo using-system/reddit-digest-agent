@@ -28,6 +28,9 @@ class Settings(BaseSettings):
         Path.home() / ".local" / "share" / "reddit-digest" / "digest.db"
     )
 
+    # Delivery
+    telegram_send_delay: int = 500
+
     # Digest
     digest_cron: str = "0 8 * * *"
     digest_language: str = "fr"

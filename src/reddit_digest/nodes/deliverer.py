@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
@@ -50,7 +51,9 @@ async def deliver_summaries(
     bot = Bot(token=settings.telegram_bot_token)
 
     delivered_ids: list[str] = []
-    for summary in summaries:
+    for i, summary in enumerate(summaries):
+        if i > 0 and settings.telegram_send_delay > 0:
+            await asyncio.sleep(settings.telegram_send_delay / 1000)
         try:
             msg = await bot.send_message(
                 chat_id=settings.telegram_chat_id,
