@@ -12,11 +12,13 @@ from pathlib import Path
 def test_summary(junit_path: Path) -> str:
     tree = ET.parse(junit_path)
     root = tree.getroot()
-    tests = root.get("tests", "?")
-    failures = root.get("failures", "0")
-    errors = root.get("errors", "0")
-    skipped = root.get("skipped", "0")
-    time = f"{float(root.get('time', 0)):.1f}s"
+    # pytest wraps results in <testsuites><testsuite .../>; attributes live on <testsuite>
+    suite = root.find("testsuite") if root.tag == "testsuites" else root
+    tests = suite.get("tests", "?")
+    failures = suite.get("failures", "0")
+    errors = suite.get("errors", "0")
+    skipped = suite.get("skipped", "0")
+    time = f"{float(suite.get('time', 0)):.1f}s"
 
     lines = [
         "| Metric | Count |",
