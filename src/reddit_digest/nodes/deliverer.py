@@ -2,41 +2,52 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections import defaultdict
 from typing import Any
 
 import aiosqlite
 from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
 
 from reddit_digest.config import Settings
-from reddit_digest.db import save_sent_post
-from reddit_digest.models import Summary
+from reddit_digest.models import RedditPost, Summary
 
 logger = logging.getLogger(__name__)
 
 
-def _format_message(summary: Summary) -> str:
-    return (
-        f"<b>r/{summary.subreddit}</b>\n\n"
-        f"<b>{summary.title}</b>\n\n"
-        f"{summary.summary_text}\n\n"
-        f"🏷 {summary.category}"
-    )
+def _format_subreddit_message(
+    subreddit: str,
+    summaries: list[Summary],
+    posts: list[RedditPost],
+) -> str:
+    posts_by_id = {p.reddit_id: p for p in posts}
+    lines = [f"📌 <b>r/{subreddit}</b>\n"]
+
+    for i, summary in enumerate(summaries, 1):
+        post = posts_by_id.get(summary.reddit_id)
+        url = post.url if post else ""
+        lines.append(f"{i}. {summary.summary_text}")
+        if url:
+            display_url = url.replace("https://", "")
+            lines.append(f"   🔗 {display_url}")
+        lines.append("")
+
+    return "\n".join(lines).strip()
 
 
-def _build_keyboard(reddit_id: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        [
+def _build_keyboard(summaries: list[Summary]) -> InlineKeyboardMarkup:
+    rows = []
+    for i, summary in enumerate(summaries, 1):
+        rows.append(
             [
                 InlineKeyboardButton(
-                    "🔥 Plus de ça", callback_data=f"more:{reddit_id}"
+                    f"{i} 👍", callback_data=f"up:{i}:{summary.reddit_id}"
                 ),
-                InlineKeyboardButton("👎 Moins", callback_data=f"less:{reddit_id}"),
                 InlineKeyboardButton(
-                    "🚫 Pas pertinent", callback_data=f"irrelevant:{reddit_id}"
+                    f"{i} 👎", callback_data=f"down:{i}:{summary.reddit_id}"
                 ),
             ]
-        ]
-    )
+        )
+    return InlineKeyboardMarkup(rows)
 
 
 async def deliver_summaries(
@@ -45,40 +56,44 @@ async def deliver_summaries(
     conn: aiosqlite.Connection,
 ) -> dict[str, Any]:
     summaries: list[Summary] = state["summaries"]
-    if not summaries:
-        return {"delivered_ids": []}
+    scored_posts: list[RedditPost] = state.get("scored_posts", [])
 
     bot = Bot(token=settings.telegram_bot_token)
 
+    if not summaries:
+        await bot.send_message(
+            chat_id=settings.telegram_chat_id,
+            text="Aucun thread pertinent pour aujourd'hui.",
+        )
+        return {"delivered_ids": []}
+
+    by_sub: dict[str, list[Summary]] = defaultdict(list)
+    for s in summaries:
+        by_sub[s.subreddit].append(s)
+
     delivered_ids: list[str] = []
-    for i, summary in enumerate(summaries):
+
+    for i, (subreddit, sub_summaries) in enumerate(by_sub.items()):
         if i > 0 and settings.telegram_send_delay > 0:
             await asyncio.sleep(settings.telegram_send_delay / 1000)
+
         try:
+            text = _format_subreddit_message(subreddit, sub_summaries, scored_posts)
+            keyboard = _build_keyboard(sub_summaries)
+
             msg = await bot.send_message(
                 chat_id=settings.telegram_chat_id,
-                text=_format_message(summary),
-                reply_markup=_build_keyboard(summary.reddit_id),
+                text=text,
+                reply_markup=keyboard,
                 parse_mode="HTML",
             )
-            matching_post = None
-            for post in state.get("filtered_posts", []):
-                if post.reddit_id == summary.reddit_id:
-                    matching_post = post
-                    break
-
-            if matching_post:
-                await save_sent_post(
-                    conn,
-                    matching_post,
-                    telegram_message_id=msg.message_id,
-                    category=summary.category,
-                    keywords=summary.keywords,
-                )
-
             delivered_ids.append(str(msg.message_id))
         except Exception:
-            logger.exception("Failed to deliver summary for %s", summary.reddit_id)
+            logger.exception("Failed to deliver digest for r/%s", subreddit)
 
-    logger.info("Delivered %d/%d summaries", len(delivered_ids), len(summaries))
+    logger.info(
+        "Delivered %d messages for %d subreddits",
+        len(delivered_ids),
+        len(by_sub),
+    )
     return {"delivered_ids": delivered_ids}

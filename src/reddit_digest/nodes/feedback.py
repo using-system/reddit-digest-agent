@@ -13,9 +13,8 @@ from reddit_digest.db import get_post_by_message_id, update_preference
 logger = logging.getLogger(__name__)
 
 SCORE_DELTAS = {
-    "more": 1,
-    "less": -1,
-    "irrelevant": -2,
+    "up": 1,
+    "down": -1,
 }
 
 ANALYZE_PROMPT = """Analyze this Reddit post and extract its main themes/topics.

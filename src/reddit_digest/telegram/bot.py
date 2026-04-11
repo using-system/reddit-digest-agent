@@ -31,11 +31,15 @@ def create_bot(
 
         await query.answer()
 
-        parts = query.data.split(":", 1)
-        if len(parts) != 2:
+        # Format: "up:1:reddit_id" or "down:2:reddit_id"
+        parts = query.data.split(":", 2)
+        if len(parts) != 3:
             return
 
-        reaction_type, reddit_id = parts
+        reaction_type, _num, reddit_id = parts
+        if reaction_type not in ("up", "down"):
+            return
+
         message_id = query.message.message_id
 
         post_meta = await get_post_by_message_id(db_conn, message_id)
