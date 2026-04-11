@@ -10,13 +10,21 @@ from reddit_digest.models import RedditPost
 
 logger = logging.getLogger(__name__)
 
-_HEADERS = {"User-Agent": "reddit-digest-agent/1.0"}
+_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json",
+}
 
 
 async def collect_posts(state: dict[str, Any], settings: Settings) -> dict[str, Any]:
     all_posts: list[RedditPost] = []
 
-    async with httpx.AsyncClient(headers=_HEADERS, timeout=30) as client:
+    async with httpx.AsyncClient(
+        headers=_HEADERS, timeout=30, follow_redirects=True
+    ) as client:
         for sub_name in state["subreddits"]:
             try:
                 params: dict[str, Any] = {
