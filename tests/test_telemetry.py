@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 from unittest.mock import patch
 
-import pytest
 import opentelemetry.metrics._internal as _metrics_internal
 import opentelemetry.trace as _trace_mod
 from opentelemetry import metrics, trace
