@@ -13,7 +13,6 @@ An AI-powered agent that delivers a daily digest of Reddit's top posts to your T
 
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/) package manager
-- A [Reddit API](https://www.reddit.com/prefs/apps) app (script type)
 - A [Telegram Bot](https://core.telegram.org/bots#botfather) token + your chat ID
 - Access to an OpenAI-compatible LLM API
 
@@ -40,9 +39,6 @@ All configuration is done via environment variables (`.env` file).
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `REDDIT_CLIENT_ID` | yes | | Reddit API client ID |
-| `REDDIT_CLIENT_SECRET` | yes | | Reddit API client secret |
-| `REDDIT_USER_AGENT` | no | `reddit-digest-agent` | Reddit API user agent |
 | `REDDIT_SUBREDDITS` | no | `["python","machinelearning","selfhosted"]` | JSON list of subreddits |
 | `REDDIT_SORT` | no | `hot` | Sort method: `hot`, `top`, `rising`, `new` |
 | `REDDIT_LIMIT` | no | `20` | Max posts per subreddit |

@@ -14,9 +14,6 @@ async def db_conn():
 @pytest.fixture
 def settings() -> Settings:
     return Settings(
-        reddit_client_id="test-id",
-        reddit_client_secret="test-secret",
-        reddit_user_agent="test-agent",
         reddit_subreddits=["python", "machinelearning"],
         reddit_sort="hot",
         reddit_limit=10,

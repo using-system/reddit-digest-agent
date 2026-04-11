@@ -3,55 +3,50 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import asyncpraw
+import httpx
 
 from reddit_digest.config import Settings
 from reddit_digest.models import RedditPost
 
 logger = logging.getLogger(__name__)
 
+_HEADERS = {"User-Agent": "reddit-digest-agent/1.0"}
+
 
 async def collect_posts(state: dict[str, Any], settings: Settings) -> dict[str, Any]:
-    reddit = asyncpraw.Reddit(
-        client_id=settings.reddit_client_id,
-        client_secret=settings.reddit_client_secret,
-        user_agent=settings.reddit_user_agent,
-    )
-
     all_posts: list[RedditPost] = []
 
-    try:
+    async with httpx.AsyncClient(headers=_HEADERS, timeout=30) as client:
         for sub_name in state["subreddits"]:
             try:
-                subreddit = await reddit.subreddit(sub_name)
-                fetch_method = {
-                    "hot": subreddit.hot,
-                    "top": subreddit.top,
-                    "rising": subreddit.rising,
-                    "new": subreddit.new,
-                }.get(settings.reddit_sort, subreddit.hot)
-
-                kwargs: dict[str, Any] = {"limit": settings.reddit_limit}
+                params: dict[str, Any] = {
+                    "limit": settings.reddit_limit,
+                    "raw_json": 1,
+                }
                 if settings.reddit_sort == "top":
-                    kwargs["time_filter"] = settings.reddit_time_filter
+                    params["t"] = settings.reddit_time_filter
 
-                async for submission in fetch_method(**kwargs):
+                url = f"https://www.reddit.com/r/{sub_name}/{settings.reddit_sort}.json"
+                resp = await client.get(url, params=params)
+                resp.raise_for_status()
+                data = resp.json()
+
+                for child in data["data"]["children"]:
+                    post = child["data"]
                     all_posts.append(
                         RedditPost(
-                            reddit_id=submission.id,
+                            reddit_id=post["id"],
                             subreddit=sub_name,
-                            title=submission.title,
-                            url=submission.url,
-                            score=submission.score,
-                            num_comments=submission.num_comments,
-                            selftext=submission.selftext or "",
-                            created_utc=submission.created_utc,
+                            title=post["title"],
+                            url=post["url"],
+                            score=post["score"],
+                            num_comments=post["num_comments"],
+                            selftext=post.get("selftext", ""),
+                            created_utc=post["created_utc"],
                         )
                     )
             except Exception:
                 logger.exception("Failed to fetch posts from r/%s", sub_name)
-    finally:
-        await reddit.close()
 
     logger.info(
         "Collected %d posts from %d subreddits",

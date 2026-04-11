@@ -6,7 +6,7 @@ requires-python = ">=3.11"
 dependencies = [
     "langchain-openai",
     "langgraph",
-    "asyncpraw",
+    "httpx",
     "python-telegram-bot",
     "apscheduler>=3.10,<4",
     "pydantic>=2.0",

@@ -3,6 +3,7 @@
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 from langchain_core.messages import AIMessage
 
@@ -11,16 +12,27 @@ from reddit_digest.graphs.digest import build_digest_graph
 from reddit_digest.graphs.feedback import build_feedback_graph
 
 
-def _make_submission(id_: str, subreddit: str = "python"):
-    sub = MagicMock()
-    sub.id = id_
-    sub.title = f"Post {id_}"
-    sub.url = f"https://reddit.com/{id_}"
-    sub.score = 50
-    sub.num_comments = 10
-    sub.selftext = f"Content of post {id_}"
-    sub.created_utc = 1700000000.0
-    return sub
+def _make_post_data(id_: str, subreddit: str = "python"):
+    return {
+        "kind": "t3",
+        "data": {
+            "id": id_,
+            "subreddit": subreddit,
+            "title": f"Post {id_}",
+            "url": f"https://reddit.com/{id_}",
+            "score": 50,
+            "num_comments": 10,
+            "selftext": f"Content of post {id_}",
+            "created_utc": 1700000000.0,
+        },
+    }
+
+
+_FAKE_REQUEST = httpx.Request("GET", "https://www.reddit.com/r/test/hot.json")
+
+
+def _reddit_response(posts):
+    return httpx.Response(200, json={"data": {"children": posts}}, request=_FAKE_REQUEST)
 
 
 def _summary_response():
@@ -37,22 +49,17 @@ def _feedback_response():
 def mock_all():
     """Mock all external services: Reddit, LLM, Telegram."""
     with (
-        patch("reddit_digest.nodes.collector.asyncpraw.Reddit") as reddit_cls,
+        patch("reddit_digest.nodes.collector.httpx.AsyncClient") as reddit_cls,
         patch("reddit_digest.nodes.summarizer.ChatOpenAI") as sum_llm_cls,
         patch("reddit_digest.nodes.deliverer.Bot") as bot_cls,
         patch("reddit_digest.nodes.feedback.ChatOpenAI") as fb_llm_cls,
     ):
         # Reddit mock
-        reddit = AsyncMock()
-        reddit_cls.return_value = reddit
-        sub_obj = AsyncMock()
-
-        async def fake_hot(**kwargs):
-            for s in [_make_submission("int1"), _make_submission("int2")]:
-                yield s
-
-        sub_obj.hot = fake_hot
-        reddit.subreddit = AsyncMock(return_value=sub_obj)
+        client = AsyncMock()
+        reddit_cls.return_value.__aenter__ = AsyncMock(return_value=client)
+        reddit_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        posts = [_make_post_data("int1"), _make_post_data("int2")]
+        client.get = AsyncMock(return_value=_reddit_response(posts))
 
         # Summarizer LLM mock
         sum_llm = AsyncMock()
@@ -77,11 +84,10 @@ def mock_all():
         fb_llm_cls.return_value = fb_llm
 
         yield {
-            "reddit": reddit,
+            "client": client,
             "sum_llm": sum_llm,
             "bot": bot,
             "fb_llm": fb_llm,
-            "sub_obj": sub_obj,
         }
 
 

@@ -1,41 +1,47 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
+import httpx
 import pytest
 
 from reddit_digest.nodes.collector import collect_posts
 
 
-def _make_submission(id_: str, subreddit: str, title: str = "Test"):
-    sub = MagicMock()
-    sub.id = id_
-    sub.title = title
-    sub.url = f"https://reddit.com/{id_}"
-    sub.score = 42
-    sub.num_comments = 5
-    sub.selftext = "content"
-    sub.created_utc = 1700000000.0
-    return sub
+def _make_post(id_: str, subreddit: str, title: str = "Test"):
+    return {
+        "kind": "t3",
+        "data": {
+            "id": id_,
+            "subreddit": subreddit,
+            "title": title,
+            "url": f"https://reddit.com/{id_}",
+            "score": 42,
+            "num_comments": 5,
+            "selftext": "content",
+            "created_utc": 1700000000.0,
+        },
+    }
+
+
+_FAKE_REQUEST = httpx.Request("GET", "https://www.reddit.com/r/test/hot.json")
+
+
+def _make_response(posts, status_code=200):
+    body = {"data": {"children": posts}}
+    return httpx.Response(status_code, json=body, request=_FAKE_REQUEST)
 
 
 @pytest.fixture
-def mock_reddit():
-    with patch("reddit_digest.nodes.collector.asyncpraw.Reddit") as mock_cls:
-        instance = AsyncMock()
-        mock_cls.return_value = instance
-        yield instance
+def mock_httpx():
+    with patch("reddit_digest.nodes.collector.httpx.AsyncClient") as mock_cls:
+        client = AsyncMock()
+        mock_cls.return_value.__aenter__ = AsyncMock(return_value=client)
+        mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        yield client
 
 
-async def test_collect_posts_basic(mock_reddit, settings):
-    submissions = [_make_submission(f"id{i}", "python") for i in range(3)]
-
-    sub_obj = AsyncMock()
-
-    async def fake_hot(**kwargs):
-        for s in submissions[: kwargs.get("limit", 20)]:
-            yield s
-
-    sub_obj.hot = fake_hot
-    mock_reddit.subreddit = AsyncMock(return_value=sub_obj)
+async def test_collect_posts_basic(mock_httpx, settings):
+    posts = [_make_post(f"id{i}", "python") for i in range(3)]
+    mock_httpx.get = AsyncMock(return_value=_make_response(posts))
 
     state = {"subreddits": ["python"]}
     result = await collect_posts(state, settings)
@@ -45,67 +51,49 @@ async def test_collect_posts_basic(mock_reddit, settings):
     assert result["raw_posts"][0].subreddit == "python"
 
 
-async def test_collect_posts_respects_limit(mock_reddit, settings):
+async def test_collect_posts_respects_limit(mock_httpx, settings):
     settings.reddit_limit = 2
-    submissions = [_make_submission(f"id{i}", "python") for i in range(5)]
-
-    sub_obj = AsyncMock()
-
-    async def fake_hot(**kwargs):
-        for s in submissions[: kwargs.get("limit", 20)]:
-            yield s
-
-    sub_obj.hot = fake_hot
-    mock_reddit.subreddit = AsyncMock(return_value=sub_obj)
+    posts = [_make_post(f"id{i}", "python") for i in range(2)]
+    mock_httpx.get = AsyncMock(return_value=_make_response(posts))
 
     state = {"subreddits": ["python"]}
     result = await collect_posts(state, settings)
+
+    call_kwargs = mock_httpx.get.call_args
+    assert call_kwargs.kwargs["params"]["limit"] == 2
     assert len(result["raw_posts"]) == 2
 
 
-async def test_collect_posts_error_in_one_subreddit(mock_reddit, settings):
-    good_submissions = [_make_submission("good1", "python")]
+async def test_collect_posts_error_in_one_subreddit(mock_httpx, settings):
+    good_posts = [_make_post("good1", "python")]
 
-    sub_good = AsyncMock()
+    async def fake_get(url, **kwargs):
+        if "badsubreddit" in url:
+            req = httpx.Request("GET", url)
+            raise httpx.HTTPStatusError(
+                "Not found",
+                request=req,
+                response=httpx.Response(404, request=req),
+            )
+        return _make_response(good_posts)
 
-    async def fake_hot(**kwargs):
-        for s in good_submissions:
-            yield s
-
-    sub_good.hot = fake_hot
-
-    sub_bad = AsyncMock()
-    sub_bad.hot = MagicMock(side_effect=Exception("API error"))
-
-    async def fake_subreddit(name):
-        if name == "badsubreddit":
-            return sub_bad
-        return sub_good
-
-    mock_reddit.subreddit = AsyncMock(side_effect=fake_subreddit)
+    mock_httpx.get = AsyncMock(side_effect=fake_get)
 
     state = {"subreddits": ["python", "badsubreddit"]}
     result = await collect_posts(state, settings)
     assert len(result["raw_posts"]) == 1
 
 
-async def test_collect_posts_top_sort(mock_reddit, settings):
+async def test_collect_posts_top_sort(mock_httpx, settings):
     settings.reddit_sort = "top"
     settings.reddit_time_filter = "week"
-    submissions = [_make_submission("t1", "python")]
-
-    sub_obj = AsyncMock()
-    calls = []
-
-    async def fake_top(**kwargs):
-        calls.append(kwargs)
-        for s in submissions:
-            yield s
-
-    sub_obj.top = fake_top
-    mock_reddit.subreddit = AsyncMock(return_value=sub_obj)
+    posts = [_make_post("t1", "python")]
+    mock_httpx.get = AsyncMock(return_value=_make_response(posts))
 
     state = {"subreddits": ["python"]}
     result = await collect_posts(state, settings)
+
     assert len(result["raw_posts"]) == 1
-    assert calls[0]["time_filter"] == "week"
+    call_kwargs = mock_httpx.get.call_args
+    assert "top.json" in call_kwargs.args[0]
+    assert call_kwargs.kwargs["params"]["t"] == "week"

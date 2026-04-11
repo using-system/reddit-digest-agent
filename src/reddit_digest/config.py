@@ -7,9 +7,6 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     # Reddit
-    reddit_client_id: str
-    reddit_client_secret: str
-    reddit_user_agent: str = "reddit-digest-agent"
     reddit_subreddits: list[str] = ["python", "machinelearning", "selfhosted"]
     reddit_sort: str = "hot"
     reddit_limit: int = 20
