@@ -11,12 +11,44 @@ An AI-powered agent that delivers a daily digest of Reddit's top posts to your T
 
 ## Prerequisites
 
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) package manager
+### Usage
+
+- Docker (or any OCI-compatible runtime)
 - A [Telegram Bot](https://core.telegram.org/bots#botfather) token + your chat ID
 - Access to an OpenAI-compatible LLM API
 
+### Development
+
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) package manager
+
 ## Quick start
+
+### Docker (recommended)
+
+Pre-built images are published to the GitHub Container Registry after each merge to `main`:
+
+```
+ghcr.io/using-system/reddit-digest-agent
+```
+
+Available tags follow semantic versioning:
+
+| Tag | Description |
+|-----|-------------|
+| `latest` | Most recent release |
+| `X.Y.Z` (e.g. `1.2.3`) | Exact version |
+| `X.Y` (e.g. `1.2`) | Latest patch for a minor version |
+| `X` (e.g. `1`) | Latest minor+patch for a major version |
+
+```bash
+docker pull ghcr.io/using-system/reddit-digest-agent:latest
+cp .env.example .env
+# Edit .env with your credentials
+docker run -d --env-file .env --name reddit-digest ghcr.io/using-system/reddit-digest-agent:latest
+```
+
+### From source
 
 ```bash
 git clone https://github.com/using-system/reddit-digest-agent.git
