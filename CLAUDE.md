@@ -33,4 +33,5 @@ See SPEC.md and `docs/superpowers/specs/` for full design spec.
 After each commit:
 1. Push the branch to the remote
 2. Create a PR if one does not already exist for the current branch
-3. Monitor the CI workflow run triggered by the push (`gh run watch`) and report the result
+3. Update the PR title and description to reflect all changes on the branch (always in English)
+4. Monitor the CI workflow run triggered by the push (`gh run watch`) and report the result
