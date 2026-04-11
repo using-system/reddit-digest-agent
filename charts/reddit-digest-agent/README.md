@@ -57,6 +57,19 @@ helm install reddit-digest oci://ghcr.io/using-system/charts/reddit-digest-agent
   --set 'config.REDDIT_SUBREDDITS=["python"\,"rust"\,"devops"]'
 ```
 
+### Extra environment variables
+
+Use `extraEnv` to inject any additional environment variable into the pod without modifying the chart. This is useful for OpenTelemetry, rate limiting, or any future setting:
+
+```bash
+helm install reddit-digest oci://ghcr.io/using-system/charts/reddit-digest-agent \
+  --set secret.existingSecret=reddit-digest-secrets \
+  --set extraEnv.OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318 \
+  --set extraEnv.OTEL_SERVICE_NAME=reddit-digest-agent
+```
+
+All keys in `extraEnv` are merged into the same ConfigMap as `config` values.
+
 ### Persistence
 
 The agent uses SQLite for state. A PersistentVolumeClaim is created automatically:
@@ -91,6 +104,7 @@ The agent uses SQLite for state. A PersistentVolumeClaim is created automaticall
 | `secret.values.OPENAI_API_KEY` | `""` | LLM API key |
 | `secret.values.TELEGRAM_BOT_TOKEN` | `""` | Telegram bot token |
 | `secret.values.TELEGRAM_CHAT_ID` | `""` | Telegram chat ID |
+| `extraEnv` | `{}` | Additional env vars merged into the ConfigMap |
 | `resources` | `{}` | CPU/memory requests and limits |
 | `nodeSelector` | `{}` | Node selector constraints |
 | `tolerations` | `[]` | Pod tolerations |

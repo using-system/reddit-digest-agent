@@ -20,6 +20,15 @@ config:
   OPENAI_BASE_URL: https://openrouter.ai/api/v1
   LLM_MODEL: google/gemini-2.5-flash
 
+# Extra environment variables injected into the ConfigMap.
+# Use this to set any additional env var without modifying the chart
+# (e.g. OpenTelemetry, rate limiting, custom settings).
+# Example:
+#   extraEnv:
+#     OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+#     OTEL_SERVICE_NAME: reddit-digest-agent
+extraEnv: {}
+
 secret:
   create: false
   existingSecret: ""
