@@ -12,6 +12,7 @@ from reddit_digest.db import init_db
 from reddit_digest.graphs.digest import build_digest_graph
 from reddit_digest.graphs.feedback import build_feedback_graph
 from reddit_digest.telegram.bot import create_bot
+from reddit_digest.telemetry import setup_telemetry
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +33,7 @@ async def run_once() -> None:
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
+    setup_telemetry()
 
     settings = load_settings()
     db_conn = await init_db(settings.db_path)
@@ -46,6 +48,7 @@ async def main() -> None:
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     )
+    setup_telemetry()
 
     settings = load_settings()
     db_conn = await init_db(settings.db_path)
