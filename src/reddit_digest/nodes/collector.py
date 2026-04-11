@@ -8,6 +8,7 @@ from curl_cffi import requests as cffi_requests
 
 from reddit_digest.config import Settings
 from reddit_digest.models import RedditPost
+from reddit_digest.telemetry import get_meter
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,17 @@ def _fetch_top_comments(
 
 
 async def collect_posts(state: dict[str, Any], settings: Settings) -> dict[str, Any]:
+    meter = get_meter("reddit_digest.collector")
+    posts_counter = meter.create_counter(
+        "reddit_digest.reddit.posts.collected",
+        description="Posts collected from Reddit",
+    )
+    fetch_histogram = meter.create_histogram(
+        "reddit_digest.reddit.fetch.duration",
+        unit="s",
+        description="Reddit fetch duration per subreddit",
+    )
+
     all_posts: list[RedditPost] = []
 
     session = cffi_requests.Session(impersonate="chrome")
@@ -46,6 +58,8 @@ async def collect_posts(state: dict[str, Any], settings: Settings) -> dict[str, 
     for i, sub_name in enumerate(state["subreddits"]):
         if i > 0 and settings.reddit_fetch_delay > 0:
             time.sleep(settings.reddit_fetch_delay / 1000)
+        sub_start = time.monotonic()
+        sub_post_count = 0
         try:
             params: dict[str, Any] = {
                 "limit": settings.reddit_limit,
@@ -94,8 +108,13 @@ async def collect_posts(state: dict[str, Any], settings: Settings) -> dict[str, 
                         top_comments=top_comments,
                     )
                 )
+                sub_post_count += 1
         except Exception:
             logger.exception("Failed to fetch posts from r/%s", sub_name)
+        finally:
+            elapsed = time.monotonic() - sub_start
+            fetch_histogram.record(elapsed, {"subreddit": sub_name})
+            posts_counter.add(sub_post_count, {"subreddit": sub_name})
 
     session.close()
 
