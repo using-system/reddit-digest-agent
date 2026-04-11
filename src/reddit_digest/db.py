@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 import aiosqlite
 
@@ -39,6 +40,7 @@ CREATE TABLE IF NOT EXISTS preferences (
 
 
 async def init_db(db_path: str = "digest.db") -> aiosqlite.Connection:
+    Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     conn = await aiosqlite.connect(db_path)
     await conn.executescript(_SCHEMA)
     await conn.commit()

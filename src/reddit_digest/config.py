@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,6 +22,11 @@ class Settings(BaseSettings):
     # Telegram
     telegram_bot_token: str
     telegram_chat_id: str
+
+    # Storage
+    db_path: str = str(
+        Path.home() / ".local" / "share" / "reddit-digest" / "digest.db"
+    )
 
     # Digest
     digest_cron: str = "0 8 * * *"

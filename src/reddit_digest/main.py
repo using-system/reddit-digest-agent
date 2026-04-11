@@ -34,7 +34,7 @@ async def run_once() -> None:
     )
 
     settings = load_settings()
-    db_conn = await init_db()
+    db_conn = await init_db(settings.db_path)
     try:
         await run_digest(settings, db_conn)
     finally:
@@ -48,7 +48,7 @@ async def main() -> None:
     )
 
     settings = load_settings()
-    db_conn = await init_db()
+    db_conn = await init_db(settings.db_path)
 
     feedback_graph = build_feedback_graph(settings, db_conn)
     app = create_bot(settings.telegram_bot_token, feedback_graph, db_conn)
