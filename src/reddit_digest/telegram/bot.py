@@ -7,6 +7,7 @@ from telegram import Update
 from telegram.ext import Application, CallbackQueryHandler, ContextTypes
 
 from reddit_digest.db import get_post_by_reddit_id, save_reaction
+from reddit_digest.telemetry import get_meter
 
 if TYPE_CHECKING:
     import aiosqlite
@@ -48,6 +49,13 @@ def create_bot(
             return
 
         await save_reaction(db_conn, message_id, reaction_type)
+
+        meter = get_meter("reddit_digest.bot")
+        reaction_counter = meter.create_counter(
+            "reddit_digest.feedback.reactions",
+            description="Reactions received",
+        )
+        reaction_counter.add(1, {"reaction_type": reaction_type})
 
         try:
             await feedback_graph.ainvoke(

@@ -129,6 +129,70 @@ All configuration is done via environment variables (`.env` file).
 | `DIGEST_CRON` | no | `0 8 * * *` | Cron expression for digest schedule |
 | `DIGEST_LANGUAGE` | no | `fr` | Summary language |
 
+## Observability (OpenTelemetry)
+
+The agent supports optional [OpenTelemetry](https://opentelemetry.io/) instrumentation. When `OTEL_EXPORTER_OTLP_ENDPOINT` is set, traces and metrics are exported via OTLP. When unset, telemetry is completely disabled with zero overhead.
+
+### Configuration
+
+All configuration uses standard OpenTelemetry environment variables:
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | no | _(unset = disabled)_ | OTLP collector endpoint (e.g. `http://localhost:4318`) |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | no | `http/protobuf` | Export protocol (`http/protobuf` or `grpc`) |
+| `OTEL_EXPORTER_OTLP_HEADERS` | no | | Auth headers (e.g. `Authorization=Bearer xxx`) |
+| `OTEL_SERVICE_NAME` | no | `reddit-digest-agent` | Service name in traces and metrics |
+| `OTEL_RESOURCE_ATTRIBUTES` | no | | Additional resource attributes |
+
+### GenAI traces (auto-instrumented)
+
+LLM calls (scoring, summarization, feedback analysis) are automatically traced following the [OpenTelemetry GenAI semantic conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/), including:
+
+- `gen_ai.operation.name`, `gen_ai.request.model`, `gen_ai.response.model`
+- `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens`
+- `gen_ai.client.operation.duration`
+
+### Pipeline traces
+
+Each digest run produces a trace with spans for every pipeline stage:
+
+`digest.run` → `digest.collector` → `digest.filterer` → `digest.scorer` → `digest.summarizer` → `digest.deliverer` → `digest.mark_all_seen`
+
+Feedback reactions produce: `feedback.receive_reaction` → `feedback.analyze` → `feedback.update_preferences`
+
+### Custom metrics
+
+| Metric | Type | Unit | Description |
+|--------|------|------|-------------|
+| `reddit_digest.digest.runs` | Counter | | Digest runs (`status`: `success`/`error`) |
+| `reddit_digest.digest.duration` | Histogram | `s` | Total digest run duration |
+| `reddit_digest.reddit.posts.collected` | Counter | | Posts collected (`subreddit`) |
+| `reddit_digest.reddit.posts.filtered` | Counter | | Posts retained after filtering |
+| `reddit_digest.reddit.posts.scored` | Counter | | Posts retained after LLM scoring |
+| `reddit_digest.reddit.fetch.duration` | Histogram | `s` | Reddit fetch duration per subreddit |
+| `reddit_digest.telegram.messages.sent` | Counter | | Telegram messages sent (`subreddit`) |
+| `reddit_digest.telegram.messages.errors` | Counter | | Telegram send errors |
+| `reddit_digest.feedback.reactions` | Counter | | Reactions received (`reaction_type`: `like`/`dislike`) |
+| `reddit_digest.feedback.preference_updates` | Counter | | Preference updates from feedback |
+
+### Example: Docker Compose with OpenTelemetry Collector
+
+```yaml
+services:
+  reddit-digest:
+    image: ghcr.io/using-system/reddit-digest-agent:latest
+    env_file: .env
+    environment:
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      OTEL_SERVICE_NAME: reddit-digest-agent
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    ports:
+      - "4318:4318"
+```
+
 ## Deploy with Docker
 
 ```bash

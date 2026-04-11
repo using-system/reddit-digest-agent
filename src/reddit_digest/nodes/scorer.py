@@ -9,6 +9,7 @@ from langchain_openai import ChatOpenAI
 
 from reddit_digest.config import Settings
 from reddit_digest.models import RedditPost
+from reddit_digest.telemetry import get_meter
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,13 @@ async def score_posts(state: dict[str, Any], settings: Settings) -> dict[str, An
                     post_score,
                     RELEVANCE_THRESHOLD,
                 )
+
+    meter = get_meter("reddit_digest.scorer")
+    scored_counter = meter.create_counter(
+        "reddit_digest.reddit.posts.scored",
+        description="Posts retained after LLM scoring",
+    )
+    scored_counter.add(len(scored))
 
     logger.info("Scored %d → %d posts", len(filtered_posts), len(scored))
     return {"scored_posts": scored}

@@ -8,6 +8,7 @@ import aiosqlite
 from reddit_digest.config import Settings
 from reddit_digest.db import get_preferences, is_post_seen
 from reddit_digest.models import RedditPost
+from reddit_digest.telemetry import get_meter
 
 logger = logging.getLogger(__name__)
 
@@ -70,6 +71,13 @@ async def filter_posts(
             continue
 
         filtered.append(post)
+
+    meter = get_meter("reddit_digest.filterer")
+    filtered_counter = meter.create_counter(
+        "reddit_digest.reddit.posts.filtered",
+        description="Posts retained after filtering",
+    )
+    filtered_counter.add(len(filtered))
 
     logger.info("Filtered %d → %d posts", len(raw_posts), len(filtered))
     return {"filtered_posts": filtered}
