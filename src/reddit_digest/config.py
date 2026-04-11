@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     reddit_time_filter: str = "day"
 
     # LLM (OpenAI-compatible)
-    llm_api_key: str
-    llm_base_url: str = "https://openrouter.ai/api/v1"
+    openai_api_key: str
+    openai_base_url: str = "https://openrouter.ai/api/v1"
     llm_model: str = "google/gemini-2.5-flash"
 
     # Telegram

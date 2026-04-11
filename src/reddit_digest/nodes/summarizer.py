@@ -27,9 +27,9 @@ async def summarize_posts(state: dict[str, Any], settings: Settings) -> dict[str
         return {"summaries": []}
 
     llm = ChatOpenAI(
-        base_url=settings.llm_base_url,
+        base_url=settings.openai_base_url,
         model=settings.llm_model,
-        api_key=settings.llm_api_key,
+        api_key=settings.openai_api_key,
     )
 
     summaries: list[Summary] = []

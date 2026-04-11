@@ -141,7 +141,7 @@ REDDIT_CLIENT_ID=xxx
 REDDIT_CLIENT_SECRET=xxx
 REDDIT_USER_AGENT=reddit-digest-agent
 TELEGRAM_BOT_TOKEN=xxx
-LLM_API_KEY=xxx
+OPENAI_API_KEY=xxx
 ```
 
 ## Project Structure

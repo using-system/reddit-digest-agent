@@ -49,9 +49,9 @@ async def analyze_reaction(state: dict[str, Any], settings: Settings) -> dict[st
     score_delta = SCORE_DELTAS.get(reaction_type, 0)
 
     llm = ChatOpenAI(
-        base_url=settings.llm_base_url,
+        base_url=settings.openai_base_url,
         model=settings.llm_model,
-        api_key=settings.llm_api_key,
+        api_key=settings.openai_api_key,
     )
 
     try:

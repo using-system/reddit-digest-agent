@@ -58,8 +58,8 @@ All configuration is done via environment variables (`.env` file).
 | `REDDIT_SORT` | no | `hot` | Sort method: `hot`, `top`, `rising`, `new` |
 | `REDDIT_LIMIT` | no | `20` | Max posts per subreddit |
 | `REDDIT_TIME_FILTER` | no | `day` | Time filter for `top` sort |
-| `LLM_API_KEY` | yes | | API key for the LLM provider |
-| `LLM_BASE_URL` | no | `https://openrouter.ai/api/v1` | OpenAI-compatible API endpoint |
+| `OPENAI_API_KEY` | yes | | API key for the LLM provider |
+| `OPENAI_BASE_URL` | no | `https://openrouter.ai/api/v1` | OpenAI-compatible API endpoint |
 | `LLM_MODEL` | no | `google/gemini-2.5-flash` | Model name |
 | `TELEGRAM_BOT_TOKEN` | yes | | Telegram bot token from BotFather |
 | `TELEGRAM_CHAT_ID` | yes | | Target chat/channel ID |
