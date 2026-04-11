@@ -60,6 +60,8 @@ cover/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+*.db
+*.db-journal
 
 # Flask stuff:
 instance/
@@ -193,6 +195,9 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# Claude Code
+.claude/
 
 # Cursor
 #  Cursor is an AI-powered code editor. `.cursorignore` specifies files/directories to
