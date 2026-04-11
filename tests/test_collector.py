@@ -42,6 +42,7 @@ def mock_session():
 
 
 async def test_collect_posts_basic(mock_session, settings):
+    settings.reddit_comments_limit = 0
     posts = [_make_post(f"id{i}", "python") for i in range(3)]
     mock_session.get.side_effect = [_make_response([]), _make_response(posts)]
 
@@ -54,6 +55,7 @@ async def test_collect_posts_basic(mock_session, settings):
 
 
 async def test_collect_posts_respects_limit(mock_session, settings):
+    settings.reddit_comments_limit = 0
     settings.reddit_limit = 2
     posts = [_make_post(f"id{i}", "python") for i in range(2)]
     mock_session.get.side_effect = [_make_response([]), _make_response(posts)]
@@ -68,6 +70,7 @@ async def test_collect_posts_respects_limit(mock_session, settings):
 
 
 async def test_collect_posts_error_in_one_subreddit(mock_session, settings):
+    settings.reddit_comments_limit = 0
     good_posts = [_make_post("good1", "python")]
 
     def fake_get(url, **kwargs):
@@ -85,6 +88,7 @@ async def test_collect_posts_error_in_one_subreddit(mock_session, settings):
 
 
 async def test_collect_posts_top_sort(mock_session, settings):
+    settings.reddit_comments_limit = 0
     settings.reddit_sort = "top"
     settings.reddit_time_filter = "week"
     posts = [_make_post("t1", "python")]
@@ -97,3 +101,38 @@ async def test_collect_posts_top_sort(mock_session, settings):
     call_kwargs = mock_session.get.call_args_list[1]
     assert "top.json" in call_kwargs.args[0]
     assert call_kwargs.kwargs["params"]["t"] == "week"
+
+
+def _make_comments_response(comments, status_code=200):
+    """Simulate Reddit comments endpoint which returns [post_data, comments_data]."""
+    children = [
+        {"kind": "t1", "data": {"body": c, "score": 10 - i}}
+        for i, c in enumerate(comments)
+    ]
+    resp = MagicMock()
+    resp.status_code = status_code
+    resp.json.return_value = [
+        {"data": {"children": []}},  # post listing
+        {"data": {"children": children}},  # comments listing
+    ]
+    resp.raise_for_status = MagicMock()
+    return resp
+
+
+async def test_collect_posts_fetches_comments(mock_session, settings):
+    settings.reddit_comments_limit = 3
+    posts = [_make_post("id1", "python")]
+    comments_resp = _make_comments_response(["Great post", "I agree", "Nice", "Meh"])
+
+    mock_session.get.side_effect = [
+        _make_response([]),       # homepage
+        _make_response(posts),    # subreddit listing
+        comments_resp,            # comments for id1
+    ]
+
+    state = {"subreddits": ["python"]}
+    result = await collect_posts(state, settings)
+
+    assert len(result["raw_posts"]) == 1
+    assert len(result["raw_posts"][0].top_comments) == 3
+    assert result["raw_posts"][0].top_comments[0] == "Great post"
