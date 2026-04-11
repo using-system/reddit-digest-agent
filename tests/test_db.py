@@ -5,9 +5,9 @@ from reddit_digest.db import (
     get_preference_score,
     get_preferences,
     init_db,
-    is_post_sent,
+    is_post_seen,
     save_reaction,
-    save_sent_post,
+    save_seen_post,
     update_preference,
 )
 from reddit_digest.models import RedditPost
@@ -40,25 +40,32 @@ async def test_tables_created(db):
     assert "sent_posts" in tables
 
 
-async def test_save_and_check_sent_post(db):
+async def test_save_seen_post_default_status(db):
     post = _make_post()
-    assert not await is_post_sent(db, post.reddit_id)
-    await save_sent_post(
-        db, post, telegram_message_id=100, category="tech", keywords=["python"]
+    assert not await is_post_seen(db, post.reddit_id)
+    await save_seen_post(db, post, status="seen")
+    assert await is_post_seen(db, post.reddit_id)
+
+
+async def test_save_seen_post_sent_status(db):
+    post = _make_post()
+    await save_seen_post(db, post, telegram_message_id=100, status="sent")
+    assert await is_post_seen(db, post.reddit_id)
+    cursor = await db.execute(
+        "SELECT status, telegram_message_id FROM sent_posts WHERE reddit_id = ?",
+        (post.reddit_id,),
     )
-    assert await is_post_sent(db, post.reddit_id)
+    row = await cursor.fetchone()
+    assert row[0] == "sent"
+    assert row[1] == 100
 
 
 async def test_get_post_by_message_id(db):
     post = _make_post()
-    await save_sent_post(
-        db, post, telegram_message_id=200, category="tech", keywords=["ai"]
-    )
+    await save_seen_post(db, post, telegram_message_id=200, status="sent")
     meta = await get_post_by_message_id(db, 200)
     assert meta is not None
     assert meta.reddit_id == "abc123"
-    assert meta.category == "tech"
-    assert meta.keywords == ["ai"]
 
 
 async def test_get_post_by_message_id_not_found(db):
@@ -68,13 +75,13 @@ async def test_get_post_by_message_id_not_found(db):
 
 async def test_save_reaction(db):
     post = _make_post()
-    await save_sent_post(db, post, telegram_message_id=300)
-    await save_reaction(db, 300, "more")
+    await save_seen_post(db, post, telegram_message_id=300, status="sent")
+    await save_reaction(db, 300, "up")
     cursor = await db.execute(
         "SELECT reaction_type FROM reactions WHERE telegram_message_id = 300"
     )
     row = await cursor.fetchone()
-    assert row[0] == "more"
+    assert row[0] == "up"
 
 
 async def test_update_preference_insert(db):
