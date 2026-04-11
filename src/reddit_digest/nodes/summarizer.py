@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from collections import defaultdict
 from typing import Any
 
 from langchain_openai import ChatOpenAI
@@ -11,19 +12,32 @@ from reddit_digest.models import RedditPost, Summary
 
 logger = logging.getLogger(__name__)
 
-PROMPT_TEMPLATE = """You are a content curator. Summarize the following Reddit post in {language}.
+PROMPT_TEMPLATE = """You are a content curator. For each Reddit post below, write a single short sentence summary in {language}. The summary should capture the key insight or news from the post and its comments.
 
-Post from r/{subreddit}: {title}
-Content: {selftext}
-URL: {url}
+Posts from r/{subreddit}:
 
-Respond ONLY with valid JSON (no markdown, no code fences):
-{{"summary": "a concise summary in {language}", "category": "single-word category", "keywords": ["keyword1", "keyword2", "keyword3"]}}"""
+{posts_block}
+
+Return ONLY valid JSON (no markdown, no code fences):
+{{"summaries": {{"post_id_1": "one sentence summary", "post_id_2": "one sentence summary"}}}}"""
+
+
+def _build_post_block(post: RedditPost) -> str:
+    comments_str = ""
+    if post.top_comments:
+        comments_str = "\nTop comments:\n" + "\n".join(
+            f"  - {c[:200]}" for c in post.top_comments[:5]
+        )
+    return (
+        f"[{post.reddit_id}] {post.title}\n"
+        f"Content: {post.selftext[:1000]}"
+        f"{comments_str}"
+    )
 
 
 async def summarize_posts(state: dict[str, Any], settings: Settings) -> dict[str, Any]:
-    filtered_posts: list[RedditPost] = state["filtered_posts"]
-    if not filtered_posts:
+    scored_posts: list[RedditPost] = state["scored_posts"]
+    if not scored_posts:
         return {"summaries": []}
 
     llm = ChatOpenAI(
@@ -32,30 +46,40 @@ async def summarize_posts(state: dict[str, Any], settings: Settings) -> dict[str
         api_key=settings.openai_api_key,
     )
 
+    by_sub: dict[str, list[RedditPost]] = defaultdict(list)
+    for post in scored_posts:
+        by_sub[post.subreddit].append(post)
+
     summaries: list[Summary] = []
-    for post in filtered_posts:
+
+    for subreddit, posts in by_sub.items():
+        posts_block = "\n\n---\n\n".join(_build_post_block(p) for p in posts)
+        prompt = PROMPT_TEMPLATE.format(
+            language=settings.digest_language,
+            subreddit=subreddit,
+            posts_block=posts_block,
+        )
+
         try:
-            prompt = PROMPT_TEMPLATE.format(
-                language=settings.digest_language,
-                subreddit=post.subreddit,
-                title=post.title,
-                selftext=post.selftext[:2000],
-                url=post.url,
-            )
             response = await llm.ainvoke(prompt)
             data = json.loads(response.content)
-            summaries.append(
-                Summary(
-                    reddit_id=post.reddit_id,
-                    subreddit=post.subreddit,
-                    title=post.title,
-                    summary_text=data["summary"],
-                    category=data.get("category", ""),
-                    keywords=data.get("keywords", []),
-                )
-            )
+            raw_summaries = data.get("summaries", {})
         except Exception:
-            logger.exception("Failed to summarize post %s", post.reddit_id)
+            logger.exception("Failed to summarize posts for r/%s", subreddit)
+            continue
 
-    logger.info("Summarized %d/%d posts", len(summaries), len(filtered_posts))
+        for post in posts:
+            text = raw_summaries.get(post.reddit_id)
+            if text:
+                summaries.append(
+                    Summary(
+                        reddit_id=post.reddit_id,
+                        subreddit=subreddit,
+                        summary_text=text,
+                    )
+                )
+            else:
+                logger.warning("No summary for post %s", post.reddit_id)
+
+    logger.info("Summarized %d/%d posts", len(summaries), len(scored_posts))
     return {"summaries": summaries}

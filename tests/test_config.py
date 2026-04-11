@@ -19,10 +19,31 @@ def test_settings_defaults(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "sk")
     s = Settings(_env_file=None)
     assert s.reddit_sort == "hot"
-    assert s.reddit_limit == 20
+    assert s.reddit_limit == 5
+    assert s.reddit_comments_limit == 5
+    assert s.reddit_min_score == 10
+    assert s.reddit_min_comments == 3
     assert s.llm_model == "google/gemini-2.5-flash"
     assert s.digest_cron == "0 8 * * *"
     assert s.digest_language == "fr"
+
+
+def test_settings_reddit_limit_clamped(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "bot:t")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk")
+    monkeypatch.setenv("REDDIT_LIMIT", "50")
+    s = Settings(_env_file=None)
+    assert s.reddit_limit == 8
+
+
+def test_settings_reddit_limit_min(monkeypatch):
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "bot:t")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "1")
+    monkeypatch.setenv("OPENAI_API_KEY", "sk")
+    monkeypatch.setenv("REDDIT_LIMIT", "0")
+    s = Settings(_env_file=None)
+    assert s.reddit_limit == 1
 
 
 def test_settings_subreddits_from_env(monkeypatch):

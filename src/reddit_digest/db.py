@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS sent_posts (
     telegram_message_id INTEGER,
     category TEXT DEFAULT '',
     keywords TEXT DEFAULT '[]',
+    status TEXT NOT NULL DEFAULT 'sent',
     sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -43,36 +44,42 @@ async def init_db(db_path: str = "digest.db") -> aiosqlite.Connection:
     Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     conn = await aiosqlite.connect(db_path)
     await conn.executescript(_SCHEMA)
-    await conn.commit()
+    # Migration: add status column if missing (existing DBs)
+    try:
+        await conn.execute("SELECT status FROM sent_posts LIMIT 1")
+    except Exception:
+        await conn.execute(
+            "ALTER TABLE sent_posts ADD COLUMN status TEXT NOT NULL DEFAULT 'sent'"
+        )
+        await conn.commit()
     return conn
 
 
-async def is_post_sent(conn: aiosqlite.Connection, reddit_id: str) -> bool:
+async def is_post_seen(conn: aiosqlite.Connection, reddit_id: str) -> bool:
     cursor = await conn.execute(
         "SELECT 1 FROM sent_posts WHERE reddit_id = ?", (reddit_id,)
     )
     return await cursor.fetchone() is not None
 
 
-async def save_sent_post(
+async def save_seen_post(
     conn: aiosqlite.Connection,
     post: RedditPost,
-    telegram_message_id: int,
-    category: str = "",
-    keywords: list[str] | None = None,
+    *,
+    telegram_message_id: int | None = None,
+    status: str = "seen",
 ) -> None:
     await conn.execute(
-        """INSERT INTO sent_posts
-           (reddit_id, subreddit, title, url, telegram_message_id, category, keywords, sent_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+        """INSERT OR IGNORE INTO sent_posts
+           (reddit_id, subreddit, title, url, telegram_message_id, status, sent_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
         (
             post.reddit_id,
             post.subreddit,
             post.title,
             post.url,
             telegram_message_id,
-            category,
-            json.dumps(keywords or []),
+            status,
             datetime.now(timezone.utc).isoformat(),
         ),
     )
@@ -86,6 +93,27 @@ async def get_post_by_message_id(
         """SELECT reddit_id, subreddit, title, url, category, keywords
            FROM sent_posts WHERE telegram_message_id = ?""",
         (telegram_message_id,),
+    )
+    row = await cursor.fetchone()
+    if row is None:
+        return None
+    return PostMetadata(
+        reddit_id=row[0],
+        subreddit=row[1],
+        title=row[2],
+        url=row[3],
+        category=row[4],
+        keywords=json.loads(row[5]),
+    )
+
+
+async def get_post_by_reddit_id(
+    conn: aiosqlite.Connection, reddit_id: str
+) -> PostMetadata | None:
+    cursor = await conn.execute(
+        """SELECT reddit_id, subreddit, title, url, category, keywords
+           FROM sent_posts WHERE reddit_id = ?""",
+        (reddit_id,),
     )
     row = await cursor.fetchone()
     if row is None:

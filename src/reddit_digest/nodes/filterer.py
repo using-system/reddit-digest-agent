@@ -5,7 +5,8 @@ from typing import Any
 
 import aiosqlite
 
-from reddit_digest.db import get_preferences, is_post_sent
+from reddit_digest.config import Settings
+from reddit_digest.db import get_preferences, is_post_seen
 from reddit_digest.models import RedditPost
 
 logger = logging.getLogger(__name__)
@@ -14,10 +15,15 @@ NEGATIVE_THRESHOLD = -3
 
 
 async def filter_posts(
-    state: dict[str, Any], conn: aiosqlite.Connection
+    state: dict[str, Any],
+    conn: aiosqlite.Connection,
+    settings: Settings | None = None,
 ) -> dict[str, Any]:
     raw_posts: list[RedditPost] = state["raw_posts"]
     preferences = await get_preferences(conn)
+
+    min_score = settings.reddit_min_score if settings else 0
+    min_comments = settings.reddit_min_comments if settings else 0
 
     # Build a lookup: subreddit -> min score across all topics
     sub_scores: dict[str, int] = {}
@@ -30,8 +36,8 @@ async def filter_posts(
 
     filtered: list[RedditPost] = []
     for post in raw_posts:
-        if await is_post_sent(conn, post.reddit_id):
-            logger.debug("Skipping already-sent post %s", post.reddit_id)
+        if await is_post_seen(conn, post.reddit_id):
+            logger.debug("Skipping already-seen post %s", post.reddit_id)
             continue
 
         sub_score = sub_scores.get(post.subreddit, 0)
@@ -42,6 +48,24 @@ async def filter_posts(
                 post.subreddit,
                 sub_score,
                 NEGATIVE_THRESHOLD,
+            )
+            continue
+
+        if post.score < min_score:
+            logger.debug(
+                "Skipping post %s: Reddit score %d < %d",
+                post.reddit_id,
+                post.score,
+                min_score,
+            )
+            continue
+
+        if post.num_comments < min_comments:
+            logger.debug(
+                "Skipping post %s: %d comments < %d",
+                post.reddit_id,
+                post.num_comments,
+                min_comments,
             )
             continue
 

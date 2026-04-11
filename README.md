@@ -5,8 +5,9 @@ An AI-powered agent that delivers a daily digest of Reddit's top posts to your T
 ## What it does
 
 - Collects top posts from configurable subreddits on a cron schedule
-- Summarizes each post using any OpenAI-compatible LLM (OpenAI, LocalAI, OpenRouter, etc.)
-- Sends summaries to Telegram with inline reaction buttons
+- Filters by Reddit metrics (score, comment count) and LLM-based relevance scoring
+- Summarizes each post in one sentence using any OpenAI-compatible LLM, informed by post content and top comments
+- Sends one compact message per subreddit to Telegram with numbered threads and per-thread 👍/👎 buttons
 - Learns from your feedback to filter future content
 
 ## Prerequisites
@@ -88,8 +89,11 @@ All configuration is done via environment variables (`.env` file).
 |----------|----------|---------|-------------|
 | `REDDIT_SUBREDDITS` | no | `["python","machinelearning","selfhosted"]` | JSON list of subreddits |
 | `REDDIT_SORT` | no | `hot` | Sort method: `hot`, `top`, `rising`, `new` |
-| `REDDIT_LIMIT` | no | `20` | Max posts per subreddit |
+| `REDDIT_LIMIT` | no | `5` | Max posts per subreddit (max 8) |
 | `REDDIT_TIME_FILTER` | no | `day` | Time filter for `top` sort |
+| `REDDIT_COMMENTS_LIMIT` | no | `5` | Top comments fetched per post (for summarization) |
+| `REDDIT_MIN_SCORE` | no | `10` | Minimum Reddit score to keep a post |
+| `REDDIT_MIN_COMMENTS` | no | `3` | Minimum comment count to keep a post |
 | `OPENAI_API_KEY` | yes | | API key for the LLM provider |
 | `OPENAI_BASE_URL` | no | `https://openrouter.ai/api/v1` | OpenAI-compatible API endpoint |
 | `LLM_MODEL` | no | `google/gemini-2.5-flash` | Model name |
@@ -112,7 +116,7 @@ docker run -d --env-file .env --name reddit-digest reddit-digest-agent
 
 ```bash
 uv sync --all-extras          # install with dev deps
-uv run pytest                 # run tests (44 tests)
+uv run pytest                 # run tests (59 tests)
 uv run ruff check src/ tests/ # lint
 uv run ruff format src/ tests/ # format
 ```

@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from langchain_core.messages import AIMessage
 
-from reddit_digest.db import get_preference_score, is_post_sent
+from reddit_digest.db import get_preference_score, is_post_seen
 from reddit_digest.graphs.digest import build_digest_graph
 from reddit_digest.graphs.feedback import build_feedback_graph
 
@@ -35,8 +35,27 @@ def _reddit_response(posts):
     return resp
 
 
-def _summary_response():
-    data = {"summary": "Résumé test", "category": "tech", "keywords": ["python", "web"]}
+def _comments_response():
+    resp = MagicMock()
+    resp.json.return_value = [
+        {"data": {"children": []}},
+        {
+            "data": {
+                "children": [{"kind": "t1", "data": {"body": "Nice post", "score": 5}}]
+            }
+        },
+    ]
+    resp.raise_for_status = MagicMock()
+    return resp
+
+
+def _scores_response(ids: list[str], score: int = 9):
+    data = {"scores": {id_: score for id_ in ids}}
+    return AIMessage(content=json.dumps(data))
+
+
+def _summaries_response(ids: list[str]):
+    data = {"summaries": {id_: f"Summary of {id_}" for id_ in ids}}
     return AIMessage(content=json.dumps(data))
 
 
@@ -47,9 +66,10 @@ def _feedback_response():
 
 @pytest.fixture
 def mock_all():
-    """Mock all external services: Reddit, LLM, Telegram."""
+    """Mock all external services: Reddit, LLM (scorer + summarizer + feedback), Telegram."""
     with (
         patch("reddit_digest.nodes.collector.cffi_requests.Session") as reddit_cls,
+        patch("reddit_digest.nodes.scorer.ChatOpenAI") as scorer_llm_cls,
         patch("reddit_digest.nodes.summarizer.ChatOpenAI") as sum_llm_cls,
         patch("reddit_digest.nodes.deliverer.Bot") as bot_cls,
         patch("reddit_digest.nodes.feedback.ChatOpenAI") as fb_llm_cls,
@@ -58,20 +78,35 @@ def mock_all():
         session = MagicMock()
         reddit_cls.return_value = session
         posts = [_make_post_data("int1"), _make_post_data("int2")]
-        session.get.return_value = _reddit_response(posts)
+        homepage_resp = _reddit_response([])
+        listing_resp = _reddit_response(posts)
+        comments_resp = _comments_response()
+        # Homepage + listing + comments for each post
+        session.get.side_effect = [
+            homepage_resp,
+            listing_resp,
+            comments_resp,
+            comments_resp,
+        ]
+
+        # Scorer LLM mock
+        scorer_llm = AsyncMock()
+        scorer_llm.ainvoke = AsyncMock(return_value=_scores_response(["int1", "int2"]))
+        scorer_llm_cls.return_value = scorer_llm
 
         # Summarizer LLM mock
         sum_llm = AsyncMock()
-        sum_llm.ainvoke = AsyncMock(return_value=_summary_response())
+        sum_llm.ainvoke = AsyncMock(return_value=_summaries_response(["int1", "int2"]))
         sum_llm_cls.return_value = sum_llm
 
         # Telegram bot mock
         bot = AsyncMock()
-        msg_ids = iter([100, 101])
+        msg_counter = {"n": 100}
 
         async def fake_send(**kwargs):
             msg = MagicMock()
-            msg.message_id = next(msg_ids)
+            msg.message_id = msg_counter["n"]
+            msg_counter["n"] += 1
             return msg
 
         bot.send_message = AsyncMock(side_effect=fake_send)
@@ -84,6 +119,7 @@ def mock_all():
 
         yield {
             "session": session,
+            "scorer_llm": scorer_llm,
             "sum_llm": sum_llm,
             "bot": bot,
             "fb_llm": fb_llm,
@@ -95,17 +131,21 @@ async def test_full_digest_then_feedback(mock_all, db_conn, settings):
     digest_graph = build_digest_graph(settings, db_conn)
     result = await digest_graph.ainvoke({"subreddits": ["python"]})
 
-    assert len(result["delivered_ids"]) == 2
-    assert await is_post_sent(db_conn, "int1")
-    assert await is_post_sent(db_conn, "int2")
+    # One message per subreddit (both posts grouped)
+    assert len(result["delivered_ids"]) == 1
+    assert await is_post_seen(db_conn, "int1")
+    assert await is_post_seen(db_conn, "int2")
 
-    # Simulate "more" reaction on first message
+    # Simulate "up" reaction — bot passes post_metadata pre-filled (looked up by reddit_id)
+    from reddit_digest.db import get_post_by_reddit_id
+
+    post_meta = await get_post_by_reddit_id(db_conn, "int1")
     feedback_graph = build_feedback_graph(settings, db_conn)
     await feedback_graph.ainvoke(
         {
             "message_id": 100,
-            "reaction_type": "more",
-            "post_metadata": {},
+            "reaction_type": "up",
+            "post_metadata": post_meta.model_dump(),
             "preference_update": {},
         }
     )
@@ -114,18 +154,32 @@ async def test_full_digest_then_feedback(mock_all, db_conn, settings):
     assert await get_preference_score(db_conn, "python", "api") == 1
 
 
-async def test_second_digest_skips_already_sent(mock_all, db_conn, settings):
-    """Second digest run should skip posts already sent in the first run."""
+async def test_second_digest_skips_already_seen(mock_all, db_conn, settings):
+    """Second digest run should skip posts already seen in the first run."""
     digest_graph = build_digest_graph(settings, db_conn)
 
     # First run
     result1 = await digest_graph.ainvoke({"subreddits": ["python"]})
-    assert len(result1["delivered_ids"]) == 2
+    assert len(result1["delivered_ids"]) == 1
+
+    # Reset mocks for second run (same posts returned by Reddit)
+    posts = [_make_post_data("int1"), _make_post_data("int2")]
+    homepage_resp = _reddit_response([])
+    listing_resp = _reddit_response(posts)
+    comments_resp = _comments_response()
+    mock_all["session"].get.side_effect = [
+        homepage_resp,
+        listing_resp,
+        comments_resp,
+        comments_resp,
+    ]
+    mock_all["bot"].send_message.reset_mock()
 
     # Second run — same posts, should be filtered out
     result2 = await digest_graph.ainvoke({"subreddits": ["python"]})
     assert len(result2["filtered_posts"]) == 0
-    assert len(result2["delivered_ids"]) == 0
+    # "Aucun thread pertinent" message sent
+    mock_all["bot"].send_message.assert_called_once()
 
 
 async def test_negative_preferences_filter_posts(mock_all, db_conn, settings):
@@ -138,4 +192,5 @@ async def test_negative_preferences_filter_posts(mock_all, db_conn, settings):
     result = await digest_graph.ainvoke({"subreddits": ["python"]})
 
     assert len(result["filtered_posts"]) == 0
-    assert len(result["delivered_ids"]) == 0
+    # "Aucun thread pertinent" message sent
+    mock_all["bot"].send_message.assert_called_once()

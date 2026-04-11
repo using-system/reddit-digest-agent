@@ -13,9 +13,8 @@ from reddit_digest.db import get_post_by_message_id, update_preference
 logger = logging.getLogger(__name__)
 
 SCORE_DELTAS = {
-    "more": 1,
-    "less": -1,
-    "irrelevant": -2,
+    "up": 1,
+    "down": -1,
 }
 
 ANALYZE_PROMPT = """Analyze this Reddit post and extract its main themes/topics.
@@ -31,6 +30,10 @@ Return ONLY valid JSON (no markdown, no code fences):
 async def receive_reaction(
     state: dict[str, Any], conn: aiosqlite.Connection
 ) -> dict[str, Any]:
+    # Bot may pass post_metadata pre-filled (looked up by reddit_id)
+    if state.get("post_metadata"):
+        return {"post_metadata": state["post_metadata"]}
+
     message_id = state["message_id"]
     post_meta = await get_post_by_message_id(conn, message_id)
     if post_meta is None:
