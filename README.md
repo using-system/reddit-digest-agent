@@ -33,6 +33,21 @@ To run a single digest immediately (no scheduler, no bot):
 uv run python -m reddit_digest.main --once
 ```
 
+## Telegram setup
+
+1. Open Telegram and search for **@BotFather**
+2. Send `/newbot`, choose a name and a username ending with `bot`
+3. Copy the token — this is your `TELEGRAM_BOT_TOKEN`
+4. Create a **new private channel** (new message > New Channel)
+5. Go to channel settings > **Administrators** > **Add Administrator**, search for your bot and confirm
+6. Send any message in the channel, then run:
+   ```bash
+   curl https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates
+   ```
+7. In the JSON response, find `"chat":{"id":-100...}` — this negative number is your `TELEGRAM_CHAT_ID`
+
+> If `getUpdates` returns empty results, remove and re-add the bot as admin, send a new message, and retry.
+
 ## Configuration
 
 All configuration is done via environment variables (`.env` file).
