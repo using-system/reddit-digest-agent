@@ -66,7 +66,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   helm:
-    needs: version
+    needs: [version, docker]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
