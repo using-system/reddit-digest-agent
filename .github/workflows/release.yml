@@ -92,7 +92,9 @@ jobs:
       - name: Attach README to GHCR package
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | oras login ghcr.io -u ${{ github.actor }} --password-stdin
-          oras attach ghcr.io/using-system/charts/reddit-digest-agent:${{ needs.version.outputs.new_version }} \
+          oras attach \
+            --artifact-type application/vnd.cncf.helm.config.v1+json \
+            ghcr.io/using-system/charts/reddit-digest-agent:${{ needs.version.outputs.new_version }} \
             charts/reddit-digest-agent/README.md:application/vnd.cncf.helm.readme.v1
 
   release:
