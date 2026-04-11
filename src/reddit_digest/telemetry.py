@@ -38,8 +38,16 @@ def setup_telemetry() -> None:
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
+    from importlib.metadata import version
+
     service_name = os.environ.get("OTEL_SERVICE_NAME", "reddit-digest-agent")
-    resource = Resource.create({"service.name": service_name})
+    try:
+        service_version = version("reddit-digest-agent")
+    except Exception:
+        service_version = "unknown"
+    resource = Resource.create(
+        {"service.name": service_name, "service.version": service_version}
+    )
 
     # Traces
     tracer_provider = TracerProvider(resource=resource)
