@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import asyncio
 import logging
 
@@ -23,6 +24,21 @@ async def run_digest(settings, db_conn) -> None:
         "Digest complete: delivered %d summaries",
         len(result.get("delivered_ids", [])),
     )
+
+
+async def run_once() -> None:
+    """Run a single digest immediately and exit."""
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
+
+    settings = load_settings()
+    db_conn = await init_db()
+    try:
+        await run_digest(settings, db_conn)
+    finally:
+        await db_conn.close()
 
 
 async def main() -> None:
@@ -66,7 +82,18 @@ async def main() -> None:
 
 
 def main_sync() -> None:
-    asyncio.run(main())
+    parser = argparse.ArgumentParser(description="Reddit Digest Agent")
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Run a single digest immediately and exit (no scheduler, no bot)",
+    )
+    args = parser.parse_args()
+
+    if args.once:
+        asyncio.run(run_once())
+    else:
+        asyncio.run(main())
 
 
 if __name__ == "__main__":

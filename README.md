@@ -28,6 +28,12 @@ cp .env.example .env
 uv run python -m reddit_digest.main
 ```
 
+To run a single digest immediately (no scheduler, no bot):
+
+```bash
+uv run python -m reddit_digest.main --once
+```
+
 ## Configuration
 
 All configuration is done via environment variables (`.env` file).
