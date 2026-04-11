@@ -17,8 +17,8 @@ class Settings(BaseSettings):
 
     # LLM (OpenAI-compatible)
     llm_api_key: str
-    llm_base_url: str = "http://localhost:8080/v1"
-    llm_model: str = "gpt-4o-mini"
+    llm_base_url: str = "https://openrouter.ai/api/v1"
+    llm_model: str = "google/gemini-2.5-flash"
 
     # Telegram
     telegram_bot_token: str

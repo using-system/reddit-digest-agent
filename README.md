@@ -48,8 +48,8 @@ All configuration is done via environment variables (`.env` file).
 | `REDDIT_LIMIT` | no | `20` | Max posts per subreddit |
 | `REDDIT_TIME_FILTER` | no | `day` | Time filter for `top` sort |
 | `LLM_API_KEY` | yes | | API key for the LLM provider |
-| `LLM_BASE_URL` | no | `http://localhost:8080/v1` | OpenAI-compatible API endpoint |
-| `LLM_MODEL` | no | `gpt-4o-mini` | Model name |
+| `LLM_BASE_URL` | no | `https://openrouter.ai/api/v1` | OpenAI-compatible API endpoint |
+| `LLM_MODEL` | no | `google/gemini-2.5-flash` | Model name |
 | `TELEGRAM_BOT_TOKEN` | yes | | Telegram bot token from BotFather |
 | `TELEGRAM_CHAT_ID` | yes | | Target chat/channel ID |
 | `DIGEST_CRON` | no | `0 8 * * *` | Cron expression for digest schedule |

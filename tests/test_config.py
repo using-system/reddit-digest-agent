@@ -27,7 +27,7 @@ def test_settings_defaults(monkeypatch):
     s = Settings(_env_file=None)
     assert s.reddit_sort == "hot"
     assert s.reddit_limit == 20
-    assert s.llm_model == "gpt-4o-mini"
+    assert s.llm_model == "google/gemini-2.5-flash"
     assert s.digest_cron == "0 8 * * *"
     assert s.digest_language == "fr"
 
