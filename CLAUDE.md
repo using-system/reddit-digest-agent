@@ -19,12 +19,15 @@ reddit-digest-agent is a Python-based, agent-driven tool that collects top posts
 - `uv run pytest -v --tb=short` — verbose test output
 - `uv run ruff check src/ tests/` — lint
 - `uv run ruff format src/ tests/` — format
-- `uv run python -m reddit_digest.main` — run the agent
+- `uv run python -m reddit_digest.main` — run the agent (scheduler + Telegram bot)
+- `uv run python -m reddit_digest.main --once` — run a single digest and exit
 
 ## Architecture
 
 Two LangGraph graphs (Digest + Feedback) sharing SQLite state.
 Single `Settings` class (pydantic-settings) loads all config from env vars.
+Reddit data is fetched via public JSON endpoints (no API credentials needed).
+Default LLM provider is OpenRouter (configurable to OpenAI, Ollama, LocalAI).
 Scheduling uses a crontab expression (`DIGEST_CRON`).
 See SPEC.md and `docs/superpowers/specs/` for full design spec.
 
