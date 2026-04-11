@@ -16,8 +16,11 @@ def settings() -> Settings:
     return Settings(
         reddit_subreddits=["python", "machinelearning"],
         reddit_sort="hot",
-        reddit_limit=10,
+        reddit_limit=5,
         reddit_time_filter="day",
+        reddit_comments_limit=5,
+        reddit_min_score=10,
+        reddit_min_comments=3,
         openai_api_key="sk-test",
         openai_base_url="https://openrouter.ai/api/v1",
         llm_model="test-model",
