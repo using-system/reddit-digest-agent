@@ -17,7 +17,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  lint:
+  lint-py:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -70,6 +70,14 @@ jobs:
           PYTHON_VERSION: ${{ matrix.python-version }}
         run: python3 .github/scripts/ci_summary.py
 
+  lint-helm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: azure/setup-helm@v4
+      - name: Helm lint
+        run: helm lint charts/reddit-digest-agent
+
   docker-build:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -90,3 +98,19 @@ jobs:
           context: .
           push: false
           platforms: linux/amd64,linux/arm64
+
+  helm-build:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: azure/setup-helm@v4
+      - name: Helm template (default values)
+        run: helm template test charts/reddit-digest-agent
+      - name: Helm template (with secret)
+        run: |
+          helm template test charts/reddit-digest-agent \
+            --set secret.create=true \
+            --set secret.values.OPENAI_API_KEY=test \
+            --set secret.values.TELEGRAM_BOT_TOKEN=test \
+            --set secret.values.TELEGRAM_CHAT_ID=test
