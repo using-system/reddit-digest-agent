@@ -1,7 +1,6 @@
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import httpx
 import pytest
 from langchain_core.messages import AIMessage
 
@@ -23,20 +22,20 @@ def _make_post_data(id_: str):
     }
 
 
-_FAKE_REQUEST = httpx.Request("GET", "https://www.reddit.com/r/test/hot.json")
-
-
 def _reddit_response(posts):
-    return httpx.Response(200, json={"data": {"children": posts}}, request=_FAKE_REQUEST)
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {"data": {"children": posts}}
+    resp.raise_for_status = MagicMock()
+    return resp
 
 
 @pytest.fixture
 def mock_reddit():
-    with patch("reddit_digest.nodes.collector.httpx.AsyncClient") as mock_cls:
-        client = AsyncMock()
-        mock_cls.return_value.__aenter__ = AsyncMock(return_value=client)
-        mock_cls.return_value.__aexit__ = AsyncMock(return_value=False)
-        yield client
+    with patch("reddit_digest.nodes.collector.cffi_requests.Session") as mock_cls:
+        session = MagicMock()
+        mock_cls.return_value = session
+        yield session
 
 
 @pytest.fixture
@@ -64,7 +63,7 @@ async def test_digest_graph_full_flow(
     mock_reddit, mock_llm, mock_bot, db_conn, settings
 ):
     posts = [_make_post_data("g1")]
-    mock_reddit.get = AsyncMock(return_value=_reddit_response(posts))
+    mock_reddit.get.side_effect = [_reddit_response([]), _reddit_response(posts)]
 
     graph = build_digest_graph(settings, db_conn)
     result = await graph.ainvoke({"subreddits": ["python"]})
@@ -78,7 +77,7 @@ async def test_digest_graph_full_flow(
 async def test_digest_graph_empty_subreddit(
     mock_reddit, mock_llm, mock_bot, db_conn, settings
 ):
-    mock_reddit.get = AsyncMock(return_value=_reddit_response([]))
+    mock_reddit.get.side_effect = [_reddit_response([]), _reddit_response([])]
 
     graph = build_digest_graph(settings, db_conn)
     result = await graph.ainvoke({"subreddits": ["empty"]})

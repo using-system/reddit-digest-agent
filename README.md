@@ -63,6 +63,7 @@ All configuration is done via environment variables (`.env` file).
 | `LLM_MODEL` | no | `google/gemini-2.5-flash` | Model name |
 | `TELEGRAM_BOT_TOKEN` | yes | | Telegram bot token from BotFather |
 | `TELEGRAM_CHAT_ID` | yes | | Target chat/channel ID |
+| `REDDIT_FETCH_DELAY` | no | `200` | Delay in ms between Reddit API calls |
 | `TELEGRAM_SEND_DELAY` | no | `500` | Delay in ms between Telegram messages |
 | `DB_PATH` | no | `~/.local/share/reddit-digest/digest.db` | SQLite database path |
 | `DIGEST_CRON` | no | `0 8 * * *` | Cron expression for digest schedule |

@@ -13,6 +13,7 @@ dependencies = [
     "pydantic-settings>=2.0",
     "python-dotenv",
     "aiosqlite",
+    "curl-cffi>=0.15.0",
 ]
 
 [project.optional-dependencies]

@@ -3,7 +3,6 @@
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import httpx
 import pytest
 from langchain_core.messages import AIMessage
 
@@ -28,11 +27,12 @@ def _make_post_data(id_: str, subreddit: str = "python"):
     }
 
 
-_FAKE_REQUEST = httpx.Request("GET", "https://www.reddit.com/r/test/hot.json")
-
-
 def _reddit_response(posts):
-    return httpx.Response(200, json={"data": {"children": posts}}, request=_FAKE_REQUEST)
+    resp = MagicMock()
+    resp.status_code = 200
+    resp.json.return_value = {"data": {"children": posts}}
+    resp.raise_for_status = MagicMock()
+    return resp
 
 
 def _summary_response():
@@ -49,17 +49,16 @@ def _feedback_response():
 def mock_all():
     """Mock all external services: Reddit, LLM, Telegram."""
     with (
-        patch("reddit_digest.nodes.collector.httpx.AsyncClient") as reddit_cls,
+        patch("reddit_digest.nodes.collector.cffi_requests.Session") as reddit_cls,
         patch("reddit_digest.nodes.summarizer.ChatOpenAI") as sum_llm_cls,
         patch("reddit_digest.nodes.deliverer.Bot") as bot_cls,
         patch("reddit_digest.nodes.feedback.ChatOpenAI") as fb_llm_cls,
     ):
         # Reddit mock
-        client = AsyncMock()
-        reddit_cls.return_value.__aenter__ = AsyncMock(return_value=client)
-        reddit_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        session = MagicMock()
+        reddit_cls.return_value = session
         posts = [_make_post_data("int1"), _make_post_data("int2")]
-        client.get = AsyncMock(return_value=_reddit_response(posts))
+        session.get.return_value = _reddit_response(posts)
 
         # Summarizer LLM mock
         sum_llm = AsyncMock()
@@ -84,7 +83,7 @@ def mock_all():
         fb_llm_cls.return_value = fb_llm
 
         yield {
-            "client": client,
+            "session": session,
             "sum_llm": sum_llm,
             "bot": bot,
             "fb_llm": fb_llm,

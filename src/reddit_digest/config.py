@@ -28,7 +28,8 @@ class Settings(BaseSettings):
         Path.home() / ".local" / "share" / "reddit-digest" / "digest.db"
     )
 
-    # Delivery
+    # Rate limiting
+    reddit_fetch_delay: int = 200
     telegram_send_delay: int = 500
 
     # Digest
