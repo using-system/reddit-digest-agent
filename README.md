@@ -11,10 +11,16 @@ An AI-powered agent that delivers a daily digest of Reddit's top posts to your T
 
 ## Prerequisites
 
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) package manager
+### Usage
+
+- Docker (or any OCI-compatible runtime)
 - A [Telegram Bot](https://core.telegram.org/bots#botfather) token + your chat ID
 - Access to an OpenAI-compatible LLM API
+
+### Development
+
+- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) package manager
 
 ## Quick start
 
