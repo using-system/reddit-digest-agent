@@ -31,6 +31,20 @@ Default LLM provider is OpenRouter (configurable to OpenAI, Ollama, LocalAI).
 Scheduling uses a crontab expression (`DIGEST_CRON`).
 See SPEC.md and `docs/superpowers/specs/` for full design spec.
 
+## Commit Convention
+
+Follow [Conventional Commits](https://www.conventionalcommits.org/) with semantic versioning in mind:
+- `feat:` — new feature (bumps MINOR)
+- `fix:` — bug fix (bumps PATCH)
+- `docs:` — documentation only
+- `chore:` — maintenance, dependencies, CI
+- `refactor:` — code change that neither fixes a bug nor adds a feature
+- `test:` — adding or updating tests
+- `perf:` — performance improvement
+- Append `!` after the type (e.g. `feat!:`) for breaking changes (bumps MAJOR)
+
+Format: `<type>(<scope>): <description>` — always try to include a scope (e.g. `feat(digest):`, `fix(telegram):`, `chore(ci):`)
+
 ## Post-Commit Workflow
 
 After each commit:
