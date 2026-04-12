@@ -120,7 +120,7 @@ All configuration is done via environment variables (`.env` file).
 | `REDDIT_MIN_COMMENTS` | no | `3` | Minimum comment count to keep a post |
 | `OPENAI_API_KEY` | yes | | API key for the LLM provider |
 | `OPENAI_BASE_URL` | no | `https://openrouter.ai/api/v1` | OpenAI-compatible API endpoint |
-| `LLM_MODEL` | no | `google/gemini-2.5-flash` | Model name |
+| `LLM_MODEL` | no | `google/gemma-3-12b-it` | Model name (see [benchmark results](benchmarks/README.md)) |
 | `TELEGRAM_BOT_TOKEN` | yes | | Telegram bot token from BotFather |
 | `TELEGRAM_CHAT_ID` | yes | | Target chat/channel ID |
 | `REDDIT_FETCH_DELAY` | no | `200` | Delay in ms between Reddit API calls |
@@ -128,6 +128,20 @@ All configuration is done via environment variables (`.env` file).
 | `DB_PATH` | no | `~/.local/share/reddit-digest/digest.db` | SQLite database path |
 | `DIGEST_CRON` | no | `0 8 * * *` | Cron expression for digest schedule |
 | `DIGEST_LANGUAGE` | no | `fr` | Summary language |
+
+## Recommended model
+
+Based on our [benchmark of 20 models](benchmarks/README.md), we recommend **`google/gemma-3-12b-it`** as the default LLM:
+
+| Model | Cost/run | JSON OK | Summary quality | Composite |
+|-------|----------|---------|-----------------|-----------|
+| openai/gpt-4o-mini | $0.0014 | 100% | 7.8/10 | 0.9813 |
+| **google/gemma-3-12b-it** | **$0.0005** | **100%** | **8.1/10** | **0.9793** |
+| google/gemma-3-27b-it | $0.0012 | 100% | 8.0/10 | 0.9679 |
+
+While `gpt-4o-mini` scores marginally higher on the composite metric, `gemma-3-12b-it` is the best self-hostable alternative: highest summary quality (8.1/10), lowest cost, 100% JSON reliability, and it runs on consumer hardware (12B parameters). It is the default value for `LLM_MODEL`.
+
+See [benchmarks/README.md](benchmarks/README.md) for the full ranking and methodology.
 
 ## Observability (OpenTelemetry)
 
