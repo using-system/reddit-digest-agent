@@ -1,7 +1,23 @@
 from unittest.mock import MagicMock
 
-from benchmarks.bench_model import _extract_cost
+from benchmarks.bench_model import _extract_cost, _strip_code_fences
 from benchmarks.aggregate import normalize_min_max, compute_composite, generate_report
+
+
+def test_strip_code_fences_json():
+    assert _strip_code_fences('```json\n{"a": 1}\n```') == '{"a": 1}'
+
+
+def test_strip_code_fences_plain():
+    assert _strip_code_fences('```\n{"a": 1}\n```') == '{"a": 1}'
+
+
+def test_strip_code_fences_no_fences():
+    assert _strip_code_fences('{"a": 1}') == '{"a": 1}'
+
+
+def test_strip_code_fences_whitespace():
+    assert _strip_code_fences('\n  {"a": 1}  \n') == '{"a": 1}'
 
 
 def test_extract_cost_from_response():

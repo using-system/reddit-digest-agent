@@ -19,6 +19,19 @@ from langchain_openai import ChatOpenAI
 logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
+
+
+def _strip_code_fences(text: str) -> str:
+    """Strip markdown code fences and whitespace from LLM output."""
+    text = text.strip()
+    if text.startswith("```"):
+        first_newline = text.index("\n") if "\n" in text else len(text)
+        text = text[first_newline + 1 :]
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
+
 DEFAULT_JUDGE_MODEL = "openai/gpt-4o"
 
 JUDGE_PROMPT = """You are evaluating the quality of AI-generated summaries of Reddit posts.
@@ -138,7 +151,7 @@ async def run_judge(
 
         try:
             response = await llm.ainvoke(prompt)
-            data = json.loads(response.content)
+            data = json.loads(_strip_code_fences(response.content))
             evals = data.get("evaluations", {})
             all_evaluations.update(evals)
         except Exception:

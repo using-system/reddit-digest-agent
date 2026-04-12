@@ -35,6 +35,18 @@ def load_fixture(path: str) -> dict:
     return json.loads(Path(path).read_text())
 
 
+def _strip_code_fences(text: str) -> str:
+    """Strip markdown code fences and whitespace from LLM output."""
+    text = text.strip()
+    if text.startswith("```"):
+        # Remove opening fence (```json or ```)
+        first_newline = text.index("\n") if "\n" in text else len(text)
+        text = text[first_newline + 1 :]
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
+
 def _extract_cost(response) -> float:
     """Extract cost from OpenRouter response metadata (usage.cost)."""
     metadata = getattr(response, "response_metadata", {})
@@ -98,7 +110,7 @@ async def run_benchmark(
             total_tokens_completion += usage.get("completion_tokens", 0)
             total_cost += _extract_cost(response)
 
-            data = json.loads(response.content)
+            data = json.loads(_strip_code_fences(response.content))
             scores = data.get("scores", {})
             all_scores.update(scores)
             json_valid_count += 1
@@ -129,7 +141,7 @@ async def run_benchmark(
             total_tokens_completion += usage.get("completion_tokens", 0)
             total_cost += _extract_cost(response)
 
-            data = json.loads(response.content)
+            data = json.loads(_strip_code_fences(response.content))
             summaries = data.get("summaries", {})
             all_summaries.update(summaries)
             json_valid_count += 1
