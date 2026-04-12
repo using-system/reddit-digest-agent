@@ -19,7 +19,7 @@ from langchain_openai import ChatOpenAI
 logger = logging.getLogger(__name__)
 
 GITHUB_MODELS_BASE_URL = "https://models.inference.ai.azure.com"
-DEFAULT_JUDGE_MODEL = "openai/gpt-4o"
+DEFAULT_JUDGE_MODEL = "gpt-4o"
 
 JUDGE_PROMPT = """You are evaluating the quality of AI-generated summaries of Reddit posts.
 The summaries are in French. For each post, multiple models produced a summary.
