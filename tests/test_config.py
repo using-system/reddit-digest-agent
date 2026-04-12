@@ -23,7 +23,7 @@ def test_settings_defaults(monkeypatch):
     assert s.reddit_comments_limit == 5
     assert s.reddit_min_score == 10
     assert s.reddit_min_comments == 3
-    assert s.llm_model == "google/gemini-2.5-flash"
+    assert s.llm_model == "google/gemma-3-12b-it"
     assert s.digest_cron == "0 8 * * *"
     assert s.digest_language == "fr"
 

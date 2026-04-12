@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # LLM (OpenAI-compatible)
     openai_api_key: str
     openai_base_url: str = "https://openrouter.ai/api/v1"
-    llm_model: str = "google/gemini-2.5-flash"
+    llm_model: str = "google/gemma-3-12b-it"
 
     # Telegram
     telegram_bot_token: str
