@@ -18,6 +18,7 @@ dependencies = [
     "opentelemetry-sdk",
     "opentelemetry-exporter-otlp-proto-http",
     "opentelemetry-instrumentation-openai",
+    "pyyaml",
 ]
 
 [project.optional-dependencies]
@@ -41,7 +42,7 @@ packages = ["src/reddit_digest"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 
 [tool.ruff]
-src = ["src", "tests"]
+src = ["src", "tests", "benchmarks"]
