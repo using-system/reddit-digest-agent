@@ -87,7 +87,9 @@ async def run_judge(
 
     posts = fixture["posts"]
     model_names = [r["model"] for r in results]
-    model_summaries = {r["model"]: r["raw_outputs"].get("summaries", {}) for r in results}
+    model_summaries = {
+        r["model"]: r["raw_outputs"].get("summaries", {}) for r in results
+    }
 
     # Build per-post evaluation blocks, batch by ~5 posts
     all_evaluations: dict[str, dict[str, dict[str, int]]] = {}
@@ -100,10 +102,12 @@ async def run_judge(
         for post in batch_posts:
             pid = post["id"] if isinstance(post, dict) else post.reddit_id
             title = post["title"] if isinstance(post, dict) else post.title
-            selftext = post.get("selftext", "") if isinstance(post, dict) else post.selftext
+            selftext = (
+                post.get("selftext", "") if isinstance(post, dict) else post.selftext
+            )
 
             lines = [f'Post "{pid}" - "{title}"']
-            lines.append(f"Original content: \"{selftext[:500]}\"")
+            lines.append(f'Original content: "{selftext[:500]}"')
             for model_name in model_names:
                 summary = model_summaries[model_name].get(pid, "(no summary)")
                 safe_name = model_name.replace("/", "_")
@@ -161,7 +165,9 @@ async def run_judge(
         concision_list = scores.get("concision", [])
         avg_fidelity = sum(fidelity_list) / len(fidelity_list) if fidelity_list else 0.0
         avg_clarity = sum(clarity_list) / len(clarity_list) if clarity_list else 0.0
-        avg_concision = sum(concision_list) / len(concision_list) if concision_list else 0.0
+        avg_concision = (
+            sum(concision_list) / len(concision_list) if concision_list else 0.0
+        )
         average = (avg_fidelity + avg_clarity + avg_concision) / 3
         result[model_name] = {
             "fidelity": round(avg_fidelity, 1),
@@ -201,14 +207,16 @@ def compute_composite(
             + WEIGHTS["summary_quality"] * norm_summary[i]
             + WEIGHTS["score_distance"] * norm_mae[i]
         )
-        ranked.append({
-            "model": r["model"],
-            "metrics": r["metrics"],
-            "judge": judge_scores.get(r["model"], {}),
-            "composite": round(composite, 4),
-            "raw_outputs": r.get("raw_outputs", {}),
-            "errors": r.get("errors", []),
-        })
+        ranked.append(
+            {
+                "model": r["model"],
+                "metrics": r["metrics"],
+                "judge": judge_scores.get(r["model"], {}),
+                "composite": round(composite, 4),
+                "raw_outputs": r.get("raw_outputs", {}),
+                "errors": r.get("errors", []),
+            }
+        )
 
     ranked.sort(key=lambda x: x["composite"], reverse=True)
     return ranked
@@ -302,13 +310,17 @@ def generate_report(
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Aggregate benchmark results")
-    parser.add_argument("--results-dir", required=True, help="Directory with result artifacts")
+    parser.add_argument(
+        "--results-dir", required=True, help="Directory with result artifacts"
+    )
     parser.add_argument(
         "--fixture",
         default="benchmarks/fixtures/golden_posts.json",
         help="Path to golden dataset",
     )
-    parser.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL, help="Judge model")
+    parser.add_argument(
+        "--judge-model", default=DEFAULT_JUDGE_MODEL, help="Judge model"
+    )
     parser.add_argument("--output", default="summary.md", help="Output markdown path")
     args = parser.parse_args()
 

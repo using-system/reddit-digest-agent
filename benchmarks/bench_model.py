@@ -54,7 +54,9 @@ def compute_cost(
     if not model_pricing:
         return 0.0
     prompt_cost = (tokens_prompt / 1_000_000) * model_pricing["prompt_per_1m"]
-    completion_cost = (tokens_completion / 1_000_000) * model_pricing["completion_per_1m"]
+    completion_cost = (tokens_completion / 1_000_000) * model_pricing[
+        "completion_per_1m"
+    ]
     return prompt_cost + completion_cost
 
 
@@ -153,7 +155,9 @@ async def run_benchmark(
             errors.append(f"summarizer/{subreddit}: {type(e).__name__}: {e}")
 
     # Compute metrics
-    json_valid_rate = json_valid_count / json_total_count if json_total_count > 0 else 0.0
+    json_valid_rate = (
+        json_valid_count / json_total_count if json_total_count > 0 else 0.0
+    )
     latency_avg = sum(latencies) / len(latencies) if latencies else 0.0
     sorted_lat = sorted(latencies)
     latency_p95 = (
@@ -167,7 +171,9 @@ async def run_benchmark(
             score_diffs.append(abs(all_scores[post_id] - ref_score))
     score_mae = sum(score_diffs) / len(score_diffs) if score_diffs else 10.0
 
-    estimated_cost = compute_cost(model, total_tokens_prompt, total_tokens_completion, pricing)
+    estimated_cost = compute_cost(
+        model, total_tokens_prompt, total_tokens_completion, pricing
+    )
 
     result = {
         "model": model,

@@ -1,10 +1,6 @@
-import json
-from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
-from langchain_core.messages import AIMessage
 
-from benchmarks.bench_model import compute_cost, load_fixture
+from benchmarks.bench_model import compute_cost
 from benchmarks.aggregate import normalize_min_max, compute_composite, generate_report
 
 
@@ -81,8 +77,18 @@ def test_compute_composite_ranks_correctly():
         },
     ]
     judge_scores = {
-        "cheap-model": {"fidelity": 7.0, "clarity": 7.0, "concision": 7.0, "average": 7.0},
-        "expensive-model": {"fidelity": 9.0, "clarity": 9.0, "concision": 9.0, "average": 9.0},
+        "cheap-model": {
+            "fidelity": 7.0,
+            "clarity": 7.0,
+            "concision": 7.0,
+            "average": 7.0,
+        },
+        "expensive-model": {
+            "fidelity": 9.0,
+            "clarity": 9.0,
+            "concision": 9.0,
+            "average": 9.0,
+        },
     }
 
     ranked = compute_composite(results, judge_scores)
@@ -104,7 +110,12 @@ def test_generate_report_contains_recommendation():
                 "tokens_prompt": 1000,
                 "tokens_completion": 200,
             },
-            "judge": {"fidelity": 8.0, "clarity": 8.0, "concision": 8.0, "average": 8.0},
+            "judge": {
+                "fidelity": 8.0,
+                "clarity": 8.0,
+                "concision": 8.0,
+                "average": 8.0,
+            },
             "composite": 0.92,
             "raw_outputs": {"scores": {"p1": 8}, "summaries": {"p1": "Un résumé"}},
             "errors": [],

@@ -143,7 +143,9 @@ async def main() -> None:
     load_dotenv()
 
     parser = argparse.ArgumentParser(description="Generate golden benchmark dataset")
-    parser.add_argument("--model", default=None, help="Reference model (default: from .env)")
+    parser.add_argument(
+        "--model", default=None, help="Reference model (default: from .env)"
+    )
     parser.add_argument(
         "--output",
         default="benchmarks/fixtures/golden_posts.json",
@@ -154,7 +156,9 @@ async def main() -> None:
 
     api_key = os.environ.get("GITHUB_TOKEN") or os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        print("Error: set GITHUB_TOKEN or OPENAI_API_KEY env var or .env", file=sys.stderr)
+        print(
+            "Error: set GITHUB_TOKEN or OPENAI_API_KEY env var or .env", file=sys.stderr
+        )
         sys.exit(1)
 
     # Use model/base_url from args, else from env, else Settings defaults

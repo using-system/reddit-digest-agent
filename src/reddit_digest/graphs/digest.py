@@ -35,7 +35,9 @@ def build_digest_graph(settings: Settings, conn: aiosqlite.Connection):
         with tracer.start_as_current_span("digest.collector") as span:
             result = await collect_posts(state, settings)
             raw_posts = result.get("raw_posts", [])
-            span.set_attribute("reddit.subreddits.count", len(state.get("subreddits", [])))
+            span.set_attribute(
+                "reddit.subreddits.count", len(state.get("subreddits", []))
+            )
             span.set_attribute("reddit.posts.collected", len(raw_posts))
             return result
 
@@ -43,14 +45,20 @@ def build_digest_graph(settings: Settings, conn: aiosqlite.Connection):
         with tracer.start_as_current_span("digest.filterer") as span:
             span.set_attribute("posts.input_count", len(state.get("raw_posts", [])))
             result = await filter_posts(state, conn, settings)
-            span.set_attribute("posts.output_count", len(result.get("filtered_posts", [])))
+            span.set_attribute(
+                "posts.output_count", len(result.get("filtered_posts", []))
+            )
             return result
 
     async def scorer_node(state: dict[str, Any]) -> dict[str, Any]:
         with tracer.start_as_current_span("digest.scorer") as span:
-            span.set_attribute("posts.input_count", len(state.get("filtered_posts", [])))
+            span.set_attribute(
+                "posts.input_count", len(state.get("filtered_posts", []))
+            )
             result = await score_posts(state, settings)
-            span.set_attribute("posts.output_count", len(result.get("scored_posts", [])))
+            span.set_attribute(
+                "posts.output_count", len(result.get("scored_posts", []))
+            )
             return result
 
     async def summarizer_node(state: dict[str, Any]) -> dict[str, Any]:
@@ -62,7 +70,9 @@ def build_digest_graph(settings: Settings, conn: aiosqlite.Connection):
     async def deliverer_node(state: dict[str, Any]) -> dict[str, Any]:
         with tracer.start_as_current_span("digest.deliverer") as span:
             result = await deliver_summaries(state, settings, conn)
-            span.set_attribute("telegram.messages.sent", len(result.get("delivered_ids", [])))
+            span.set_attribute(
+                "telegram.messages.sent", len(result.get("delivered_ids", []))
+            )
             return result
 
     async def mark_all_seen_node(state: dict[str, Any]) -> dict[str, Any]:
