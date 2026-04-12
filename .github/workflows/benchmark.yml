@@ -1,0 +1,89 @@
+name: LLM Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      models:
+        description: "JSON array of models to benchmark"
+        required: false
+        default: '["openai/gpt-4o","openai/gpt-4o-mini","openai/gpt-4.1","openai/gpt-4.1-mini","openai/gpt-4.1-nano","mistral-ai/mistral-large","mistral-ai/mistral-small","meta/llama-4-scout","microsoft/phi-4"]'
+      judge_model:
+        description: "Model used as LLM judge"
+        required: false
+        default: "openai/gpt-4o"
+  pull_request:
+    paths:
+      - ".github/workflows/benchmark.yml"
+      - "benchmarks/**"
+
+jobs:
+  bench:
+    name: "Bench: ${{ matrix.model }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      models: read
+    strategy:
+      fail-fast: false
+      matrix:
+        model: ${{ fromJson(inputs.models || '["openai/gpt-4o-mini","openai/gpt-4.1-nano"]') }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v8.0.0
+        with:
+          python-version: "3.13"
+
+      - run: uv sync --all-extras
+
+      - name: Run benchmark
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          uv run python benchmarks/bench_model.py \
+            --model "${{ matrix.model }}" \
+            --fixture benchmarks/fixtures/golden_posts.json \
+            --output "results.json"
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: "benchmark-${{ strategy.job-index }}"
+          path: results.json
+          retention-days: 7
+
+  report:
+    name: "Aggregate & Report"
+    needs: bench
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      models: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: astral-sh/setup-uv@v8.0.0
+        with:
+          python-version: "3.13"
+
+      - run: uv sync --all-extras
+
+      - name: Download all results
+        uses: actions/download-artifact@v4
+        with:
+          path: all-results
+          pattern: "benchmark-*"
+
+      - name: Aggregate and generate report
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          JUDGE="${{ inputs.judge_model || 'openai/gpt-4o' }}"
+          uv run python benchmarks/aggregate.py \
+            --results-dir all-results \
+            --fixture benchmarks/fixtures/golden_posts.json \
+            --judge-model "$JUDGE" \
+            --output summary.md
+          cat summary.md >> "$GITHUB_STEP_SUMMARY"
