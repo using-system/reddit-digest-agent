@@ -28,7 +28,7 @@ from reddit_digest.nodes.summarizer import _build_post_block as summarizer_build
 
 logger = logging.getLogger(__name__)
 
-GITHUB_MODELS_BASE_URL = "https://models.inference.ai.azure.com"
+DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 PRICING_PATH = Path(__file__).parent / "model_pricing.yaml"
 
 
@@ -65,10 +65,12 @@ async def run_benchmark(
     fixture_path: str,
     output_path: str,
 ) -> None:
-    api_key = os.environ.get("GITHUB_TOKEN") or os.environ.get("OPENAI_API_KEY")
+    api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        print("Error: set GITHUB_TOKEN or OPENAI_API_KEY env var", file=sys.stderr)
+        print("Error: set OPENAI_API_KEY env var", file=sys.stderr)
         sys.exit(1)
+
+    base_url = os.environ.get("OPENAI_BASE_URL", DEFAULT_BASE_URL)
 
     fixture = load_fixture(fixture_path)
     pricing = load_pricing()
@@ -76,7 +78,7 @@ async def run_benchmark(
     ref_scores = fixture["reference_outputs"]["scores"]
 
     llm = ChatOpenAI(
-        base_url=GITHUB_MODELS_BASE_URL,
+        base_url=base_url,
         model=model,
         api_key=api_key,
     )

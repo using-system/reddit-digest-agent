@@ -18,8 +18,8 @@ from langchain_openai import ChatOpenAI
 
 logger = logging.getLogger(__name__)
 
-GITHUB_MODELS_BASE_URL = "https://models.inference.ai.azure.com"
-DEFAULT_JUDGE_MODEL = "gpt-4o"
+DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
+DEFAULT_JUDGE_MODEL = "openai/gpt-4o"
 
 JUDGE_PROMPT = """You are evaluating the quality of AI-generated summaries of Reddit posts.
 The summaries are in French. For each post, multiple models produced a summary.
@@ -79,8 +79,10 @@ async def run_judge(
 
     Returns: {model: {"fidelity": avg, "clarity": avg, "concision": avg, "average": avg}}
     """
+    base_url = os.environ.get("OPENAI_BASE_URL", DEFAULT_BASE_URL)
+
     llm = ChatOpenAI(
-        base_url=GITHUB_MODELS_BASE_URL,
+        base_url=base_url,
         model=judge_model,
         api_key=api_key,
     )
@@ -324,9 +326,9 @@ async def main() -> None:
     parser.add_argument("--output", default="summary.md", help="Output markdown path")
     args = parser.parse_args()
 
-    api_key = os.environ.get("GITHUB_TOKEN") or os.environ.get("OPENAI_API_KEY")
+    api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        print("Error: set GITHUB_TOKEN or OPENAI_API_KEY env var", file=sys.stderr)
+        print("Error: set OPENAI_API_KEY env var", file=sys.stderr)
         sys.exit(1)
 
     logging.basicConfig(level=logging.INFO)

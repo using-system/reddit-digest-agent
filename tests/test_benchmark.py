@@ -6,9 +6,9 @@ from benchmarks.aggregate import normalize_min_max, compute_composite, generate_
 
 def test_compute_cost_known_model():
     pricing = {
-        "gpt-4o-mini": {"prompt_per_1m": 0.15, "completion_per_1m": 0.60},
+        "openai/gpt-4o-mini": {"prompt_per_1m": 0.15, "completion_per_1m": 0.60},
     }
-    cost = compute_cost("gpt-4o-mini", 1_000_000, 1_000_000, pricing)
+    cost = compute_cost("openai/gpt-4o-mini", 1_000_000, 1_000_000, pricing)
     assert cost == pytest.approx(0.75)
 
 
@@ -19,9 +19,9 @@ def test_compute_cost_unknown_model():
 
 def test_compute_cost_zero_tokens():
     pricing = {
-        "gpt-4o": {"prompt_per_1m": 2.50, "completion_per_1m": 10.00},
+        "openai/gpt-4o": {"prompt_per_1m": 2.50, "completion_per_1m": 10.00},
     }
-    cost = compute_cost("gpt-4o", 0, 0, pricing)
+    cost = compute_cost("openai/gpt-4o", 0, 0, pricing)
     assert cost == 0.0
 
 
