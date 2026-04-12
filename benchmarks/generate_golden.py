@@ -17,6 +17,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from dotenv import load_dotenv
 from curl_cffi import requests as cffi_requests
 from langchain_openai import ChatOpenAI
 
@@ -97,13 +98,14 @@ async def generate_reference_outputs(
     posts: list[RedditPost],
     model: str,
     api_key: str,
+    base_url: str,
     language: str = "fr",
 ) -> dict:
     """Call the reference model to produce gold standard scores and summaries."""
     from collections import defaultdict
 
     llm = ChatOpenAI(
-        base_url=GITHUB_MODELS_BASE_URL,
+        base_url=base_url,
         model=model,
         api_key=api_key,
     )
@@ -138,8 +140,10 @@ async def generate_reference_outputs(
 async def main() -> None:
     import os
 
+    load_dotenv()
+
     parser = argparse.ArgumentParser(description="Generate golden benchmark dataset")
-    parser.add_argument("--model", default=DEFAULT_REF_MODEL, help="Reference model")
+    parser.add_argument("--model", default=None, help="Reference model (default: from .env)")
     parser.add_argument(
         "--output",
         default="benchmarks/fixtures/golden_posts.json",
@@ -150,8 +154,15 @@ async def main() -> None:
 
     api_key = os.environ.get("GITHUB_TOKEN") or os.environ.get("OPENAI_API_KEY")
     if not api_key:
-        print("Error: set GITHUB_TOKEN or OPENAI_API_KEY env var", file=sys.stderr)
+        print("Error: set GITHUB_TOKEN or OPENAI_API_KEY env var or .env", file=sys.stderr)
         sys.exit(1)
+
+    # Use model/base_url from args, else from env, else Settings defaults
+    model = args.model or os.environ.get("LLM_MODEL") or DEFAULT_REF_MODEL
+    base_url = (
+        os.environ.get("OPENAI_BASE_URL")
+        or Settings.model_fields["openai_base_url"].default
+    )
 
     logging.basicConfig(level=logging.INFO)
 
@@ -162,15 +173,15 @@ async def main() -> None:
     posts = fetch_posts(subreddits)
     logger.info("Fetched %d posts", len(posts))
 
-    logger.info("Generating reference outputs with %s...", args.model)
+    logger.info("Generating reference outputs with %s...", model)
     ref_outputs = await generate_reference_outputs(
-        posts, args.model, api_key, args.language
+        posts, model, api_key, base_url, args.language
     )
 
     golden = {
         "metadata": {
             "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-            "reference_model": args.model,
+            "reference_model": model,
             "subreddits": subreddits,
         },
         "posts": [p.model_dump() for p in posts],
