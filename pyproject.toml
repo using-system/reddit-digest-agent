@@ -18,7 +18,6 @@ dependencies = [
     "opentelemetry-sdk",
     "opentelemetry-exporter-otlp-proto-http",
     "opentelemetry-instrumentation-openai",
-    "pyyaml",
 ]
 
 [project.optional-dependencies]

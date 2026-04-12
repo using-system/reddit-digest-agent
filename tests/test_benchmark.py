@@ -1,28 +1,24 @@
-import pytest
+from unittest.mock import MagicMock
 
-from benchmarks.bench_model import compute_cost
+from benchmarks.bench_model import _extract_cost
 from benchmarks.aggregate import normalize_min_max, compute_composite, generate_report
 
 
-def test_compute_cost_known_model():
-    pricing = {
-        "openai/gpt-4o-mini": {"prompt_per_1m": 0.15, "completion_per_1m": 0.60},
-    }
-    cost = compute_cost("openai/gpt-4o-mini", 1_000_000, 1_000_000, pricing)
-    assert cost == pytest.approx(0.75)
+def test_extract_cost_from_response():
+    response = MagicMock()
+    response.response_metadata = {"token_usage": {"cost": 0.00042}}
+    assert _extract_cost(response) == 0.00042
 
 
-def test_compute_cost_unknown_model():
-    cost = compute_cost("unknown/model", 1000, 500, {})
-    assert cost == 0.0
+def test_extract_cost_missing():
+    response = MagicMock()
+    response.response_metadata = {"token_usage": {}}
+    assert _extract_cost(response) == 0.0
 
 
-def test_compute_cost_zero_tokens():
-    pricing = {
-        "openai/gpt-4o": {"prompt_per_1m": 2.50, "completion_per_1m": 10.00},
-    }
-    cost = compute_cost("openai/gpt-4o", 0, 0, pricing)
-    assert cost == 0.0
+def test_extract_cost_no_metadata():
+    response = MagicMock(spec=[])
+    assert _extract_cost(response) == 0.0
 
 
 def test_normalize_min_max_basic():

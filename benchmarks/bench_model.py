@@ -17,7 +17,6 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
-import yaml
 from langchain_openai import ChatOpenAI
 
 from reddit_digest.models import RedditPost
@@ -29,7 +28,6 @@ from reddit_digest.nodes.summarizer import _build_post_block as summarizer_build
 logger = logging.getLogger(__name__)
 
 DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
-PRICING_PATH = Path(__file__).parent / "model_pricing.yaml"
 
 
 def load_fixture(path: str) -> dict:
@@ -37,27 +35,14 @@ def load_fixture(path: str) -> dict:
     return json.loads(Path(path).read_text())
 
 
-def load_pricing() -> dict[str, dict[str, float]]:
-    """Load model pricing from YAML."""
-    data = yaml.safe_load(PRICING_PATH.read_text())
-    return data.get("models", {})
-
-
-def compute_cost(
-    model: str,
-    tokens_prompt: int,
-    tokens_completion: int,
-    pricing: dict[str, dict[str, float]],
-) -> float:
-    """Compute estimated cost in USD."""
-    model_pricing = pricing.get(model)
-    if not model_pricing:
-        return 0.0
-    prompt_cost = (tokens_prompt / 1_000_000) * model_pricing["prompt_per_1m"]
-    completion_cost = (tokens_completion / 1_000_000) * model_pricing[
-        "completion_per_1m"
-    ]
-    return prompt_cost + completion_cost
+def _extract_cost(response) -> float:
+    """Extract cost from OpenRouter response metadata (usage.cost)."""
+    metadata = getattr(response, "response_metadata", {})
+    usage = metadata.get("token_usage", {})
+    cost = usage.get("cost")
+    if isinstance(cost, (int, float)):
+        return float(cost)
+    return 0.0
 
 
 async def run_benchmark(
@@ -73,7 +58,6 @@ async def run_benchmark(
     base_url = os.environ.get("OPENAI_BASE_URL", DEFAULT_BASE_URL)
 
     fixture = load_fixture(fixture_path)
-    pricing = load_pricing()
     posts = [RedditPost(**p) for p in fixture["posts"]]
     ref_scores = fixture["reference_outputs"]["scores"]
 
@@ -95,6 +79,7 @@ async def run_benchmark(
     json_total_count = 0
     total_tokens_prompt = 0
     total_tokens_completion = 0
+    total_cost = 0.0
 
     for subreddit, sub_posts in by_sub.items():
         # --- Score ---
@@ -108,10 +93,10 @@ async def run_benchmark(
             elapsed_ms = (time.monotonic() - start) * 1000
             latencies.append(elapsed_ms)
 
-            # Extract token usage from response metadata
             usage = getattr(response, "response_metadata", {}).get("token_usage", {})
             total_tokens_prompt += usage.get("prompt_tokens", 0)
             total_tokens_completion += usage.get("completion_tokens", 0)
+            total_cost += _extract_cost(response)
 
             data = json.loads(response.content)
             scores = data.get("scores", {})
@@ -142,6 +127,7 @@ async def run_benchmark(
             usage = getattr(response, "response_metadata", {}).get("token_usage", {})
             total_tokens_prompt += usage.get("prompt_tokens", 0)
             total_tokens_completion += usage.get("completion_tokens", 0)
+            total_cost += _extract_cost(response)
 
             data = json.loads(response.content)
             summaries = data.get("summaries", {})
@@ -155,6 +141,16 @@ async def run_benchmark(
             elapsed_ms = (time.monotonic() - start) * 1000
             latencies.append(elapsed_ms)
             errors.append(f"summarizer/{subreddit}: {type(e).__name__}: {e}")
+
+    # Fail if ALL calls failed (no valid JSON at all)
+    if json_valid_count == 0 and json_total_count > 0:
+        for err in errors:
+            logger.error(err)
+        print(
+            f"Error: all {json_total_count} LLM calls failed for {model}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     # Compute metrics
     json_valid_rate = (
@@ -173,10 +169,6 @@ async def run_benchmark(
             score_diffs.append(abs(all_scores[post_id] - ref_score))
     score_mae = sum(score_diffs) / len(score_diffs) if score_diffs else 10.0
 
-    estimated_cost = compute_cost(
-        model, total_tokens_prompt, total_tokens_completion, pricing
-    )
-
     result = {
         "model": model,
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -184,7 +176,7 @@ async def run_benchmark(
             "json_valid_rate": round(json_valid_rate, 4),
             "latency_avg_ms": round(latency_avg, 1),
             "latency_p95_ms": round(latency_p95, 1),
-            "estimated_cost_usd": round(estimated_cost, 6),
+            "estimated_cost_usd": round(total_cost, 6),
             "score_mae": round(score_mae, 2),
             "tokens_prompt": total_tokens_prompt,
             "tokens_completion": total_tokens_completion,
