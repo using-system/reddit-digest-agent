@@ -1,0 +1,30 @@
+# Pricing per 1M tokens (USD) — GitHub Models / Azure AI
+# Source: https://github.com/marketplace/models
+models:
+  openai/gpt-4o:
+    prompt_per_1m: 2.50
+    completion_per_1m: 10.00
+  openai/gpt-4o-mini:
+    prompt_per_1m: 0.15
+    completion_per_1m: 0.60
+  openai/gpt-4.1:
+    prompt_per_1m: 2.00
+    completion_per_1m: 8.00
+  openai/gpt-4.1-mini:
+    prompt_per_1m: 0.40
+    completion_per_1m: 1.60
+  openai/gpt-4.1-nano:
+    prompt_per_1m: 0.10
+    completion_per_1m: 0.40
+  mistral-ai/mistral-large:
+    prompt_per_1m: 2.00
+    completion_per_1m: 6.00
+  mistral-ai/mistral-small:
+    prompt_per_1m: 0.10
+    completion_per_1m: 0.30
+  meta/llama-4-scout:
+    prompt_per_1m: 0.15
+    completion_per_1m: 0.40
+  microsoft/phi-4:
+    prompt_per_1m: 0.07
+    completion_per_1m: 0.14
