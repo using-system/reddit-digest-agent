@@ -122,7 +122,7 @@ def test_generate_report_contains_recommendation():
         },
     ]
     fixture = {
-        "posts": [{"id": "p1", "title": "Test", "selftext": "Content"}],
+        "posts": [{"reddit_id": "p1", "title": "Test", "selftext": "Content"}],
         "reference_outputs": {"scores": {"p1": 8}},
     }
 

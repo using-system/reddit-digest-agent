@@ -100,7 +100,7 @@ async def run_judge(
 
         posts_block_parts = []
         for post in batch_posts:
-            pid = post["id"] if isinstance(post, dict) else post.reddit_id
+            pid = post["reddit_id"] if isinstance(post, dict) else post.reddit_id
             title = post["title"] if isinstance(post, dict) else post.title
             selftext = (
                 post.get("selftext", "") if isinstance(post, dict) else post.selftext
@@ -285,7 +285,7 @@ def generate_report(
         lines.append("|------|---------|----------|---------|-----------|")
         model_summaries = r.get("raw_outputs", {}).get("summaries", {})
         for post in fixture.get("posts", []):
-            pid = post["id"] if isinstance(post, dict) else post.reddit_id
+            pid = post["reddit_id"] if isinstance(post, dict) else post.reddit_id
             summary = model_summaries.get(pid, "N/A")
             # Truncate long summaries for the table
             display = summary[:80] + "..." if len(summary) > 80 else summary
