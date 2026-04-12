@@ -2,24 +2,39 @@
 # Model IDs match GitHub Models API (no vendor prefix)
 # Source: https://github.com/marketplace/models
 models:
+  # --- Large tier ---
   gpt-4o:
     prompt_per_1m: 2.50
     completion_per_1m: 10.00
-  gpt-4o-mini:
-    prompt_per_1m: 0.15
-    completion_per_1m: 0.60
   gpt-4.1:
     prompt_per_1m: 2.00
     completion_per_1m: 8.00
+  grok-3:
+    prompt_per_1m: 3.00
+    completion_per_1m: 15.00
+  Meta-Llama-3.1-405B-Instruct:
+    prompt_per_1m: 1.00
+    completion_per_1m: 1.00
+  # --- Mid tier ---
+  gpt-4o-mini:
+    prompt_per_1m: 0.15
+    completion_per_1m: 0.60
   gpt-4.1-mini:
     prompt_per_1m: 0.40
     completion_per_1m: 1.60
+  grok-3-mini:
+    prompt_per_1m: 0.30
+    completion_per_1m: 0.50
+  # --- Small tier ---
   gpt-4.1-nano:
     prompt_per_1m: 0.10
     completion_per_1m: 0.40
-  Meta-Llama-3.1-8B-Instruct:
-    prompt_per_1m: 0.03
-    completion_per_1m: 0.06
+  Llama-4-Scout-17B-16E-Instruct:
+    prompt_per_1m: 0.15
+    completion_per_1m: 0.40
   Phi-4:
+    prompt_per_1m: 0.07
+    completion_per_1m: 0.14
+  Phi-4-mini-instruct:
     prompt_per_1m: 0.07
     completion_per_1m: 0.14
