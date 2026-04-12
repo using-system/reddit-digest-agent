@@ -17,8 +17,3 @@ storage:
     wal:
       path: /tmp/tempo/wal
 
-metrics_generator:
-  storage:
-    path: /tmp/tempo/metrics
-  traces_storage:
-    path: /tmp/tempo/blocks
