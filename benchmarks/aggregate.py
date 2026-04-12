@@ -118,7 +118,7 @@ async def run_judge(
 
         # Build schema hint
         post_ids = [
-            p["id"] if isinstance(p, dict) else p.reddit_id for p in batch_posts
+            p["reddit_id"] if isinstance(p, dict) else p.reddit_id for p in batch_posts
         ]
         safe_models = [m.replace("/", "_") for m in model_names]
         schema_parts = []
