@@ -19,10 +19,11 @@ services:
     environment:
       - PHOENIX_WORKING_DIR=/tmp/phoenix
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6006/healthz')"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:6006/healthz')\""]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 15s
 
   prometheus:
     image: prom/prometheus:latest
@@ -66,7 +67,7 @@ services:
       prometheus:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:13133/"]
+      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/13133"]
       interval: 10s
       timeout: 5s
       retries: 5
