@@ -7,43 +7,62 @@ from reddit_digest.db import is_post_seen
 from reddit_digest.graphs.digest import build_digest_graph
 
 
-def _make_collector_response(posts):
-    children = [
-        {
-            "data": {
-                "id": p["id"],
-                "subreddit": p["sub"],
-                "title": p.get("title", "Test"),
-                "url": f"https://reddit.com/{p['id']}",
-                "score": p.get("score", 100),
-                "num_comments": p.get("num_comments", 20),
-                "selftext": "content",
-                "created_utc": 1700000000.0,
-            }
-        }
-        for p in posts
-    ]
-    resp = MagicMock()
-    resp.json.return_value = {"data": {"children": children}}
-    resp.raise_for_status = MagicMock()
-    return resp
+def _mcp_top_posts_text(posts):
+    """Build MCP get_top_posts text for test posts."""
+    lines = ["# Top Posts from r/python (hot)\n"]
+    for i, p in enumerate(posts, 1):
+        lines.append(f"### {i}. {p.get('title', 'Test')}")
+        lines.append("- Author: u/testuser")
+        lines.append(f"- Score: {p.get('score', 100)} (95.0% upvoted)")
+        lines.append(f"- Comments: {p.get('num_comments', 20)}")
+        lines.append("- Posted: 4/12/2026, 10:00:00 AM")
+        lines.append(
+            f"- Link: https://reddit.com/r/{p['sub']}/comments/{p['id']}/test/"
+        )
+        lines.append("")
+    return "\n".join(lines)
 
 
-def _make_comments_response():
-    resp = MagicMock()
-    resp.json.return_value = [
-        {"data": {"children": []}},
-        {"data": {"children": [{"kind": "t1", "data": {"body": "Nice", "score": 5}}]}},
-    ]
-    resp.raise_for_status = MagicMock()
-    return resp
+def _mcp_comments_text():
+    """Build MCP get_post_comments text with one comment."""
+    return (
+        "# Comments for: Test\n\n"
+        "## Post Details\n"
+        "- Author: u/test\n"
+        "- Subreddit: r/python\n"
+        "- Score: 100 (95.0% upvoted)\n"
+        "- Posted: 4/12/2026, 10:00:00 AM\n"
+        "- Link: https://reddit.com/r/python/comments/x1/test/\n\n"
+        "## Post Content\ncontent\n\n"
+        "## Comments (1 loaded, sorted by best)\n\n"
+        "**u/commenter** \u2022 5 points \u2022 4/12/2026, 11:00:00 AM\n"
+        "Nice\n"
+    )
+
+
+def _mcp_tool_result(text):
+    content_item = MagicMock()
+    content_item.text = text
+    result = MagicMock()
+    result.content = [content_item]
+    return result
+
+
+def _mock_mcp_conn(call_tool_side_effect):
+    """Create a patched _MCPConnection context manager."""
+    session = AsyncMock()
+    session.call_tool.side_effect = call_tool_side_effect
+    mock_conn = MagicMock()
+    mock_conn.connect = AsyncMock(return_value=session)
+    mock_conn.close = AsyncMock()
+    return patch(
+        "reddit_digest.nodes.collector._MCPConnection",
+        return_value=mock_conn,
+    )
 
 
 async def test_digest_graph_full_flow(db_conn, settings):
     posts = [{"id": "x1", "sub": "python", "score": 100, "num_comments": 20}]
-    homepage_resp = MagicMock()
-    homepage_resp.json.return_value = {"data": {"children": []}}
-    homepage_resp.raise_for_status = MagicMock()
 
     scores_resp = AIMessage(content=json.dumps({"scores": {"x1": 9}}))
     summaries_resp = AIMessage(
@@ -54,21 +73,16 @@ async def test_digest_graph_full_flow(db_conn, settings):
     fake_msg.message_id = 42
 
     with (
-        patch(
-            "reddit_digest.nodes.collector.cffi_requests.Session"
-        ) as mock_session_cls,
+        _mock_mcp_conn(
+            [
+                _mcp_tool_result(_mcp_top_posts_text(posts)),
+                _mcp_tool_result(_mcp_comments_text()),
+            ]
+        ),
         patch("reddit_digest.nodes.scorer.ChatOpenAI") as mock_scorer_llm_cls,
         patch("reddit_digest.nodes.summarizer.ChatOpenAI") as mock_sum_llm_cls,
         patch("reddit_digest.nodes.deliverer.Bot") as mock_bot_cls,
     ):
-        session = MagicMock()
-        mock_session_cls.return_value = session
-        session.get.side_effect = [
-            homepage_resp,
-            _make_collector_response(posts),
-            _make_comments_response(),
-        ]
-
         scorer_llm = AsyncMock()
         scorer_llm.ainvoke = AsyncMock(return_value=scores_resp)
         mock_scorer_llm_cls.return_value = scorer_llm
@@ -90,28 +104,20 @@ async def test_digest_graph_full_flow(db_conn, settings):
 
 async def test_digest_graph_no_relevant_posts(db_conn, settings):
     posts = [{"id": "x1", "sub": "python", "score": 100, "num_comments": 20}]
-    homepage_resp = MagicMock()
-    homepage_resp.json.return_value = {"data": {"children": []}}
-    homepage_resp.raise_for_status = MagicMock()
 
     scores_resp = AIMessage(content=json.dumps({"scores": {"x1": 2}}))
 
     with (
-        patch(
-            "reddit_digest.nodes.collector.cffi_requests.Session"
-        ) as mock_session_cls,
+        _mock_mcp_conn(
+            [
+                _mcp_tool_result(_mcp_top_posts_text(posts)),
+                _mcp_tool_result(_mcp_comments_text()),
+            ]
+        ),
         patch("reddit_digest.nodes.scorer.ChatOpenAI") as mock_scorer_llm_cls,
         patch("reddit_digest.nodes.summarizer.ChatOpenAI") as mock_sum_llm_cls,
         patch("reddit_digest.nodes.deliverer.Bot") as mock_bot_cls,
     ):
-        session = MagicMock()
-        mock_session_cls.return_value = session
-        session.get.side_effect = [
-            homepage_resp,
-            _make_collector_response(posts),
-            _make_comments_response(),
-        ]
-
         scorer_llm = AsyncMock()
         scorer_llm.ainvoke = AsyncMock(return_value=scores_resp)
         mock_scorer_llm_cls.return_value = scorer_llm

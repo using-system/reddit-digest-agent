@@ -11,42 +11,45 @@ from reddit_digest.graphs.digest import build_digest_graph
 from reddit_digest.graphs.feedback import build_feedback_graph
 
 
-def _make_post_data(id_: str, subreddit: str = "python"):
-    return {
-        "kind": "t3",
-        "data": {
-            "id": id_,
-            "subreddit": subreddit,
-            "title": f"Post {id_}",
-            "url": f"https://reddit.com/{id_}",
-            "score": 50,
-            "num_comments": 10,
-            "selftext": f"Content of post {id_}",
-            "created_utc": 1700000000.0,
-        },
-    }
+def _mcp_top_posts_text(ids: list[str], subreddit: str = "python"):
+    """Build MCP get_top_posts text."""
+    lines = [f"# Top Posts from r/{subreddit} (hot)\n"]
+    for i, id_ in enumerate(ids, 1):
+        lines.append(f"### {i}. Post {id_}")
+        lines.append("- Author: u/testuser")
+        lines.append("- Score: 50 (95.0% upvoted)")
+        lines.append("- Comments: 10")
+        lines.append("- Posted: 4/12/2026, 10:00:00 AM")
+        lines.append(
+            f"- Link: https://reddit.com/r/{subreddit}/comments/{id_}/post_{id_}/"
+        )
+        lines.append("")
+    return "\n".join(lines)
 
 
-def _reddit_response(posts):
-    resp = MagicMock()
-    resp.status_code = 200
-    resp.json.return_value = {"data": {"children": posts}}
-    resp.raise_for_status = MagicMock()
-    return resp
+def _mcp_comments_text(id_: str = "int1"):
+    """Build MCP get_post_comments text with one comment."""
+    return (
+        f"# Comments for: Post {id_}\n\n"
+        "## Post Details\n"
+        "- Author: u/test\n"
+        "- Subreddit: r/python\n"
+        "- Score: 50 (95.0% upvoted)\n"
+        "- Posted: 4/12/2026, 10:00:00 AM\n"
+        f"- Link: https://reddit.com/r/python/comments/{id_}/post_{id_}/\n\n"
+        f"## Post Content\nContent of post {id_}\n\n"
+        "## Comments (1 loaded, sorted by best)\n\n"
+        "**u/commenter** \u2022 5 points \u2022 4/12/2026, 11:00:00 AM\n"
+        "Nice post\n"
+    )
 
 
-def _comments_response():
-    resp = MagicMock()
-    resp.json.return_value = [
-        {"data": {"children": []}},
-        {
-            "data": {
-                "children": [{"kind": "t1", "data": {"body": "Nice post", "score": 5}}]
-            }
-        },
-    ]
-    resp.raise_for_status = MagicMock()
-    return resp
+def _mcp_tool_result(text):
+    content_item = MagicMock()
+    content_item.text = text
+    result = MagicMock()
+    result.content = [content_item]
+    return result
 
 
 def _scores_response(ids: list[str], score: int = 9):
@@ -66,29 +69,28 @@ def _feedback_response():
 
 @pytest.fixture
 def mock_all():
-    """Mock all external services: Reddit, LLM (scorer + summarizer + feedback), Telegram."""
+    """Mock all external services: Reddit MCP, LLM (scorer + summarizer + feedback), Telegram."""
+    # MCP mock
+    mcp_session = AsyncMock()
+    mcp_session.call_tool.side_effect = [
+        _mcp_tool_result(_mcp_top_posts_text(["int1", "int2"])),
+        _mcp_tool_result(_mcp_comments_text("int1")),
+        _mcp_tool_result(_mcp_comments_text("int2")),
+    ]
+    mock_conn = MagicMock()
+    mock_conn.connect = AsyncMock(return_value=mcp_session)
+    mock_conn.close = AsyncMock()
+
     with (
-        patch("reddit_digest.nodes.collector.cffi_requests.Session") as reddit_cls,
+        patch(
+            "reddit_digest.nodes.collector._MCPConnection",
+            return_value=mock_conn,
+        ),
         patch("reddit_digest.nodes.scorer.ChatOpenAI") as scorer_llm_cls,
         patch("reddit_digest.nodes.summarizer.ChatOpenAI") as sum_llm_cls,
         patch("reddit_digest.nodes.deliverer.Bot") as bot_cls,
         patch("reddit_digest.nodes.feedback.ChatOpenAI") as fb_llm_cls,
     ):
-        # Reddit mock
-        session = MagicMock()
-        reddit_cls.return_value = session
-        posts = [_make_post_data("int1"), _make_post_data("int2")]
-        homepage_resp = _reddit_response([])
-        listing_resp = _reddit_response(posts)
-        comments_resp = _comments_response()
-        # Homepage + listing + comments for each post
-        session.get.side_effect = [
-            homepage_resp,
-            listing_resp,
-            comments_resp,
-            comments_resp,
-        ]
-
         # Scorer LLM mock
         scorer_llm = AsyncMock()
         scorer_llm.ainvoke = AsyncMock(return_value=_scores_response(["int1", "int2"]))
@@ -118,7 +120,8 @@ def mock_all():
         fb_llm_cls.return_value = fb_llm
 
         yield {
-            "session": session,
+            "mcp_session": mcp_session,
+            "mcp_conn": mock_conn,
             "scorer_llm": scorer_llm,
             "sum_llm": sum_llm,
             "bot": bot,
@@ -162,16 +165,11 @@ async def test_second_digest_skips_already_seen(mock_all, db_conn, settings):
     result1 = await digest_graph.ainvoke({"subreddits": ["python"]})
     assert len(result1["delivered_ids"]) == 1
 
-    # Reset mocks for second run (same posts returned by Reddit)
-    posts = [_make_post_data("int1"), _make_post_data("int2")]
-    homepage_resp = _reddit_response([])
-    listing_resp = _reddit_response(posts)
-    comments_resp = _comments_response()
-    mock_all["session"].get.side_effect = [
-        homepage_resp,
-        listing_resp,
-        comments_resp,
-        comments_resp,
+    # Reset MCP mock for second run (same posts returned)
+    mock_all["mcp_session"].call_tool.side_effect = [
+        _mcp_tool_result(_mcp_top_posts_text(["int1", "int2"])),
+        _mcp_tool_result(_mcp_comments_text("int1")),
+        _mcp_tool_result(_mcp_comments_text("int2")),
     ]
     mock_all["bot"].send_message.reset_mock()
 

@@ -64,12 +64,14 @@ def reset_telemetry():
 
 
 @patch.dict(os.environ, {"OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4318"})
-def test_setup_telemetry_instruments_openai():
-    """OpenAIInstrumentor.instrument() must be called during setup_telemetry()."""
+def test_setup_telemetry_instruments_all():
+    """All instrumentors must be called during setup_telemetry()."""
     import reddit_digest.telemetry as tel
 
-    mock_instance = MagicMock()
-    mock_openai_cls = MagicMock(return_value=mock_instance)
+    mock_openai = MagicMock()
+    mock_openai_cls = MagicMock(return_value=mock_openai)
+    mock_mcp = MagicMock()
+    mock_mcp_cls = MagicMock(return_value=mock_mcp)
 
     patches = [
         patch("opentelemetry.exporter.otlp.proto.http.trace_exporter.OTLPSpanExporter"),
@@ -83,6 +85,7 @@ def test_setup_telemetry_instruments_openai():
         ),
         patch("opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor"),
         patch("opentelemetry.instrumentation.sqlite3.SQLite3Instrumentor"),
+        patch("opentelemetry.instrumentation.mcp.McpInstrumentor", mock_mcp_cls),
     ]
 
     tel._initialized = False
@@ -94,10 +97,12 @@ def test_setup_telemetry_instruments_openai():
         patches[4],
         patches[5],
         patches[6],
+        patches[7],
     ):
         tel.setup_telemetry()
 
-    mock_instance.instrument.assert_called_once()
+    mock_openai.instrument.assert_called_once()
+    mock_mcp.instrument.assert_called_once()
 
 
 class TestSetupTelemetryEnabled:
