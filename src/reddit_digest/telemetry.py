@@ -64,6 +64,12 @@ def setup_telemetry() -> None:
 
     OpenAIInstrumentor().instrument()
 
+    # OpenInference instrumentation for LangChain/LangGraph
+    # Adds span.kind (CHAIN/LLM/TOOL) attributes for Phoenix
+    from openinference.instrumentation.langchain import LangChainInstrumentor
+
+    LangChainInstrumentor().instrument()
+
     def _shutdown() -> None:
         tracer_provider.shutdown()
         meter_provider.shutdown()
