@@ -64,15 +64,13 @@ def reset_telemetry():
 
 
 @patch.dict(os.environ, {"OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4318"})
-def test_setup_telemetry_instruments_langchain():
-    """LangChainInstrumentor.instrument() must be called during setup_telemetry()."""
+def test_setup_telemetry_instruments_openai():
+    """OpenAIInstrumentor.instrument() must be called during setup_telemetry()."""
     import reddit_digest.telemetry as tel
 
     mock_instance = MagicMock()
-    mock_lc_cls = MagicMock(return_value=mock_instance)
+    mock_openai_cls = MagicMock(return_value=mock_instance)
 
-    # Patch all the lazy-imported SDK symbols at their canonical paths so that
-    # setup_telemetry() does not try to open real network connections.
     patches = [
         patch("opentelemetry.exporter.otlp.proto.http.trace_exporter.OTLPSpanExporter"),
         patch(
@@ -80,10 +78,11 @@ def test_setup_telemetry_instruments_langchain():
         ),
         patch("opentelemetry.sdk.trace.export.BatchSpanProcessor"),
         patch("opentelemetry.sdk.metrics.export.PeriodicExportingMetricReader"),
-        patch("opentelemetry.instrumentation.openai.OpenAIInstrumentor"),
         patch(
-            "openinference.instrumentation.langchain.LangChainInstrumentor", mock_lc_cls
+            "opentelemetry.instrumentation.openai.OpenAIInstrumentor", mock_openai_cls
         ),
+        patch("opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor"),
+        patch("opentelemetry.instrumentation.sqlite3.SQLite3Instrumentor"),
     ]
 
     tel._initialized = False
@@ -94,6 +93,7 @@ def test_setup_telemetry_instruments_langchain():
         patches[3],
         patches[4],
         patches[5],
+        patches[6],
     ):
         tel.setup_telemetry()
 

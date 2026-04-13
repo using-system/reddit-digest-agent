@@ -59,27 +59,17 @@ def setup_telemetry() -> None:
     meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
     metrics.set_meter_provider(meter_provider)
 
-    # Auto-instrumentation for OpenAI SDK — metrics only (token usage,
-    # duration, exceptions).  A no-op TracerProvider suppresses its trace
-    # spans (openai.chat) so they don't duplicate the OpenInference LLM spans.
+    # Auto-instrumentation: GenAI traces + metrics
     from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
-    noop_tracer_provider = TracerProvider()  # no span processor → spans are dropped
-    OpenAIInstrumentor().instrument(tracer_provider=noop_tracer_provider)
+    OpenAIInstrumentor().instrument()
 
-    # Dependency call tracing — HTTP and SQLite
+    # Auto-instrumentation: HTTP and SQLite dependency calls
     from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
     from opentelemetry.instrumentation.sqlite3 import SQLite3Instrumentor
 
     HTTPXClientInstrumentor().instrument()
     SQLite3Instrumentor().instrument()
-
-    # OpenInference instrumentation for LangChain/LangGraph
-    # Adds typed spans (CHAIN/LLM/TOOL) and session support for Phoenix,
-    # while remaining compatible with any OTel backend (Tempo, Grafana, Jaeger)
-    from openinference.instrumentation.langchain import LangChainInstrumentor
-
-    LangChainInstrumentor().instrument()
 
     def _shutdown() -> None:
         tracer_provider.shutdown()
