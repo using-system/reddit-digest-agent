@@ -67,6 +67,13 @@ def setup_telemetry() -> None:
     noop_tracer_provider = TracerProvider()  # no span processor → spans are dropped
     OpenAIInstrumentor().instrument(tracer_provider=noop_tracer_provider)
 
+    # Dependency call tracing — HTTP and SQLite
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+    from opentelemetry.instrumentation.sqlite3 import SQLite3Instrumentor
+
+    HTTPXClientInstrumentor().instrument()
+    SQLite3Instrumentor().instrument()
+
     # OpenInference instrumentation for LangChain/LangGraph
     # Adds typed spans (CHAIN/LLM/TOOL) and session support for Phoenix,
     # while remaining compatible with any OTel backend (Tempo, Grafana, Jaeger)

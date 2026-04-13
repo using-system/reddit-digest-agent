@@ -809,6 +809,37 @@ wheels = [
 ]
 
 [[package]]
+name = "opentelemetry-instrumentation-dbapi"
+version = "0.62b0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "wrapt" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1d/bd/1030ec9d77d70bd8273ae6d84e32b144f9cff23c2a0ea053425db52d8dae/opentelemetry_instrumentation_dbapi-0.62b0.tar.gz", hash = "sha256:d573e388fb7da1cbe8c34b138167dd5c28f840bdcffb25ff0e33dc54fb3e4da7", size = 16849, upload-time = "2026-04-09T14:40:33.504Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/89/92/0cb608b4c113aa5ee8db613e4681ba05baa8f2ef14441dc2957ae1f3c1cf/opentelemetry_instrumentation_dbapi-0.62b0-py3-none-any.whl", hash = "sha256:5c65e03ac68a71159f2d227b2229714feb03e57294658e54e9f5435d2e55edd2", size = 14186, upload-time = "2026-04-09T14:39:38.94Z" },
+]
+
+[[package]]
+name = "opentelemetry-instrumentation-httpx"
+version = "0.62b0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-semantic-conventions" },
+    { name = "opentelemetry-util-http" },
+    { name = "wrapt" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/77/a7/63e2c6325c8e99cd9b8e0229a8b61c37520ee537214a2c8d514e84486a94/opentelemetry_instrumentation_httpx-0.62b0.tar.gz", hash = "sha256:d865398db3f3c289ba226e355bf4d94460a4301c0c8916e3136caea55ae18000", size = 24182, upload-time = "2026-04-09T14:40:38.719Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c0/5e/7d5fc28487637871b015128cd5dbb3c36f6d343a9098b893bd803d5a9cca/opentelemetry_instrumentation_httpx-0.62b0-py3-none-any.whl", hash = "sha256:c7660b939c12608fec67743126e9b4dc23dceef0ed631c415924966b0d1579e3", size = 17200, upload-time = "2026-04-09T14:39:46.618Z" },
+]
+
+[[package]]
 name = "opentelemetry-instrumentation-openai"
 version = "0.59.0"
 source = { registry = "https://pypi.org/simple" }
@@ -821,6 +852,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a4/46/8f7dcbe3ba38a47188a8d18f664e3873ba7806b7cf21311ec051ccd37e76/opentelemetry_instrumentation_openai-0.59.0.tar.gz", hash = "sha256:5938954790e7f8e9190daecbc6e2af195242b7d21d329405f92a0b09d5aa4a3e", size = 7326159, upload-time = "2026-04-13T05:58:56.675Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/d6/96/8715721cdd5a074d760a2c8b566e89c9d1afa4c3245efe3b9cc05a2b2ab5/opentelemetry_instrumentation_openai-0.59.0-py3-none-any.whl", hash = "sha256:2b1077b15da96f450fbd32cd23ce6815e163e613699b21e58b95098e4defc4fc", size = 45117, upload-time = "2026-04-13T05:58:16.408Z" },
+]
+
+[[package]]
+name = "opentelemetry-instrumentation-sqlite3"
+version = "0.62b0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "opentelemetry-instrumentation" },
+    { name = "opentelemetry-instrumentation-dbapi" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a1/a3/7bc1accf8043b48aab1031b02b3c0468a4e66464ac78d7de65d57a7acac3/opentelemetry_instrumentation_sqlite3-0.62b0.tar.gz", hash = "sha256:7b397360d12208e02a4bda351a28fc54092f8de86a5f0bcab2c163419949452e", size = 7958, upload-time = "2026-04-09T14:40:50.909Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4c/71/84ba781f9607efb1607d1e40edfc1947172d13a4b2fe3127e244da60c034/opentelemetry_instrumentation_sqlite3-0.62b0-py3-none-any.whl", hash = "sha256:610f966782f051e52fb4004bfedf06530f145894402c490eb7a88d6a57778674", size = 9339, upload-time = "2026-04-09T14:40:05.322Z" },
 ]
 
 [[package]]
@@ -873,6 +918,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/24/02/10aeacc37a38a3a8fa16ff67bec1ae3bf882539f6f9efb0f70acf802ca2d/opentelemetry_semantic_conventions_ai-0.5.1.tar.gz", hash = "sha256:153906200d8c1d2f8e09bd78dbef526916023de85ac3dab35912bfafb69ff04c", size = 26533, upload-time = "2026-03-26T14:20:38.73Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/55/22/41fb05f1dc5fda2c468e05a41814c20859016c85117b66c8a257cae814f6/opentelemetry_semantic_conventions_ai-0.5.1-py3-none-any.whl", hash = "sha256:25aeb22bd261543b4898a73824026d96770e5351209c7d07a0b1314762b1f6e4", size = 11250, upload-time = "2026-03-26T14:20:37.108Z" },
+]
+
+[[package]]
+name = "opentelemetry-util-http"
+version = "0.62b0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/e7/830f7c57135158eb8a8efd3f94ab191a89e3b8a49bed314a35ee501da3f2/opentelemetry_util_http-0.62b0.tar.gz", hash = "sha256:a62e4b19b8a432c0de657f167dee3455516136bb9c6ed463ca8063019970d835", size = 11393, upload-time = "2026-04-09T14:40:59.442Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3d/7f/5c1b7d4385852b9e5eacd4e7f9d8b565d3d351d17463b24916ad098adf1a/opentelemetry_util_http-0.62b0-py3-none-any.whl", hash = "sha256:c20462808d8cc95b69b0dc4a3e02a9d36beb663347e96c931f51ffd78bd318ad", size = 9294, upload-time = "2026-04-09T14:40:19.014Z" },
 ]
 
 [[package]]
@@ -1302,7 +1356,9 @@ dependencies = [
     { name = "openinference-instrumentation-langchain" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-instrumentation-httpx" },
     { name = "opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-sqlite3" },
     { name = "opentelemetry-sdk" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
@@ -1329,7 +1385,9 @@ requires-dist = [
     { name = "openinference-instrumentation-langchain" },
     { name = "opentelemetry-api" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
+    { name = "opentelemetry-instrumentation-httpx" },
     { name = "opentelemetry-instrumentation-openai" },
+    { name = "opentelemetry-instrumentation-sqlite3" },
     { name = "opentelemetry-sdk" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "pydantic-settings", specifier = ">=2.0" },
