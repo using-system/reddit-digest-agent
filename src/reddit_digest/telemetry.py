@@ -59,11 +59,13 @@ def setup_telemetry() -> None:
     meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
     metrics.set_meter_provider(meter_provider)
 
-    # Auto-instrumentation for OpenAI SDK (used by langchain-openai)
-    # Provides GenAI metrics (token usage, duration, exceptions)
+    # Auto-instrumentation for OpenAI SDK — metrics only (token usage,
+    # duration, exceptions).  A no-op TracerProvider suppresses its trace
+    # spans (openai.chat) so they don't duplicate the OpenInference LLM spans.
     from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
-    OpenAIInstrumentor().instrument()
+    noop_tracer_provider = TracerProvider()  # no span processor → spans are dropped
+    OpenAIInstrumentor().instrument(tracer_provider=noop_tracer_provider)
 
     # OpenInference instrumentation for LangChain/LangGraph
     # Adds typed spans (CHAIN/LLM/TOOL) and session support for Phoenix,
