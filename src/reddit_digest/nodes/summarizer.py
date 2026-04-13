@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import logging
 from collections import defaultdict
 from typing import Any
@@ -9,6 +8,7 @@ from langchain_openai import ChatOpenAI
 
 from reddit_digest.config import Settings
 from reddit_digest.models import RedditPost, Summary
+from reddit_digest.nodes.llm_utils import extract_json
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,7 @@ async def summarize_posts(state: dict[str, Any], settings: Settings) -> dict[str
 
         try:
             response = await llm.ainvoke(prompt)
-            data = json.loads(response.content)
+            data = extract_json(response.content)
             raw_summaries = data.get("summaries", {})
         except Exception:
             logger.exception("Failed to summarize posts for r/%s", subreddit)

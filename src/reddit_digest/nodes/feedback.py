@@ -9,6 +9,7 @@ from langchain_openai import ChatOpenAI
 
 from reddit_digest.config import Settings
 from reddit_digest.db import get_post_by_message_id, update_preference
+from reddit_digest.nodes.llm_utils import extract_json
 from reddit_digest.telemetry import get_meter
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ async def analyze_reaction(state: dict[str, Any], settings: Settings) -> dict[st
             keywords=json.dumps(post_meta.get("keywords", [])),
         )
         response = await llm.ainvoke(prompt)
-        data = json.loads(response.content)
+        data = extract_json(response.content)
         topics = data.get("topics", [])
     except Exception:
         logger.exception("Failed to analyze reaction topics")
