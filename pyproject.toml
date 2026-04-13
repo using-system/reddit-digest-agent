@@ -18,6 +18,7 @@ dependencies = [
     "opentelemetry-sdk",
     "opentelemetry-exporter-otlp-proto-http",
     "opentelemetry-instrumentation-openai",
+    "openinference-instrumentation-langchain",
 ]
 
 [project.optional-dependencies]
