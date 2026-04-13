@@ -4,6 +4,9 @@ import argparse
 import asyncio
 import logging
 import time
+from uuid import uuid4
+
+from openinference.instrumentation import using_attributes
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -32,14 +35,17 @@ async def run_digest(settings, db_conn) -> None:
     )
 
     start = time.monotonic()
-    logger.info("Running scheduled digest...")
+    session_id = str(uuid4())
+    logger.info("Running scheduled digest (session_id=%s)...", session_id)
 
     with tracer.start_as_current_span("digest.run") as span:
         span.set_attribute("digest.subreddits", settings.reddit_subreddits)
         span.set_attribute("digest.cron_expression", settings.digest_cron)
+        span.set_attribute("session.id", session_id)
         try:
             graph = build_digest_graph(settings, db_conn)
-            result = await graph.ainvoke({"subreddits": settings.reddit_subreddits})
+            with using_attributes(session_id=session_id):
+                result = await graph.ainvoke({"subreddits": settings.reddit_subreddits})
             delivered = len(result.get("delivered_ids", []))
             logger.info("Digest complete: delivered %d summaries", delivered)
             runs_counter.add(1, {"status": "success"})
