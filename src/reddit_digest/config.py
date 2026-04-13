@@ -36,7 +36,6 @@ class Settings(BaseSettings):
     db_path: str = str(Path.home() / ".local" / "share" / "reddit-digest" / "digest.db")
 
     # Rate limiting
-    reddit_fetch_delay: int = 200
     telegram_send_delay: int = 500
 
     # Digest
