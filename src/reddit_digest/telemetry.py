@@ -71,6 +71,10 @@ def setup_telemetry() -> None:
     HTTPXClientInstrumentor().instrument()
     SQLite3Instrumentor().instrument()
 
+    from opentelemetry.instrumentation.mcp import McpInstrumentor
+
+    McpInstrumentor().instrument()
+
     def _shutdown() -> None:
         tracer_provider.shutdown()
         meter_provider.shutdown()
