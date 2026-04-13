@@ -1,6 +1,6 @@
 services:
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.7.2
     ports:
       - "3200:3200"
     volumes:
@@ -19,7 +19,7 @@ services:
     environment:
       - PHOENIX_WORKING_DIR=/tmp/phoenix
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:6006/healthz')\""]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6006/healthz')"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -67,10 +67,11 @@ services:
       prometheus:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "echo > /dev/tcp/localhost/13133"]
+      test: ["CMD", "/otelcol-contrib", "validate", "--config", "/etc/otelcol-contrib/config.yaml"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   agent:
     build:
