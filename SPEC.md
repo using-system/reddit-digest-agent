@@ -3,6 +3,9 @@
 Full design specs:
 - [Initial design](docs/superpowers/specs/2026-04-09-reddit-digest-agent-design.md)
 - [Compact digest redesign](docs/superpowers/specs/2026-04-11-compact-digest-design.md)
+- [OpenTelemetry observability](docs/superpowers/specs/2026-04-11-opentelemetry-observability-design.md)
+- [LLM benchmark](docs/superpowers/specs/2026-04-12-llm-benchmark-design.md)
+- [Observability stack](docs/superpowers/specs/2026-04-12-observability-stack-design.md)
 - [MCP Reddit source](docs/superpowers/specs/2026-04-13-mcp-reddit-source-design.md)
 
 ## Summary
@@ -27,5 +30,6 @@ Two LangGraph graphs sharing SQLite state:
 | Scheduler | APScheduler |
 | Storage | SQLite |
 | Telegram | python-telegram-bot |
+| Observability | OpenTelemetry (GenAI + MCP + HTTPX + SQLite instrumentors) |
 | Config | Environment variables (.env) |
 | Tests | pytest + pytest-asyncio |
