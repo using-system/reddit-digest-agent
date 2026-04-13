@@ -75,11 +75,15 @@ def test_setup_telemetry_instruments_langchain():
     # setup_telemetry() does not try to open real network connections.
     patches = [
         patch("opentelemetry.exporter.otlp.proto.http.trace_exporter.OTLPSpanExporter"),
-        patch("opentelemetry.exporter.otlp.proto.http.metric_exporter.OTLPMetricExporter"),
+        patch(
+            "opentelemetry.exporter.otlp.proto.http.metric_exporter.OTLPMetricExporter"
+        ),
         patch("opentelemetry.sdk.trace.export.BatchSpanProcessor"),
         patch("opentelemetry.sdk.metrics.export.PeriodicExportingMetricReader"),
         patch("opentelemetry.instrumentation.openai.OpenAIInstrumentor"),
-        patch("openinference.instrumentation.langchain.LangChainInstrumentor", mock_lc_cls),
+        patch(
+            "openinference.instrumentation.langchain.LangChainInstrumentor", mock_lc_cls
+        ),
     ]
 
     tel._initialized = False

@@ -60,12 +60,14 @@ def setup_telemetry() -> None:
     metrics.set_meter_provider(meter_provider)
 
     # Auto-instrumentation for OpenAI SDK (used by langchain-openai)
+    # Provides GenAI metrics (token usage, duration, exceptions)
     from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
     OpenAIInstrumentor().instrument()
 
     # OpenInference instrumentation for LangChain/LangGraph
-    # Adds span.kind (CHAIN/LLM/TOOL) attributes for Phoenix
+    # Adds typed spans (CHAIN/LLM/TOOL) and session support for Phoenix,
+    # while remaining compatible with any OTel backend (Tempo, Grafana, Jaeger)
     from openinference.instrumentation.langchain import LangChainInstrumentor
 
     LangChainInstrumentor().instrument()
