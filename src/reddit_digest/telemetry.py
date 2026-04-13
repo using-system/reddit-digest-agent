@@ -59,10 +59,17 @@ def setup_telemetry() -> None:
     meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
     metrics.set_meter_provider(meter_provider)
 
-    # Auto-instrumentation for OpenAI SDK (used by langchain-openai)
+    # Auto-instrumentation: GenAI traces + metrics
     from opentelemetry.instrumentation.openai import OpenAIInstrumentor
 
     OpenAIInstrumentor().instrument()
+
+    # Auto-instrumentation: HTTP and SQLite dependency calls
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+    from opentelemetry.instrumentation.sqlite3 import SQLite3Instrumentor
+
+    HTTPXClientInstrumentor().instrument()
+    SQLite3Instrumentor().instrument()
 
     def _shutdown() -> None:
         tracer_provider.shutdown()

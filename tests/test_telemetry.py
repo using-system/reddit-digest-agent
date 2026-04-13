@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import os
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 import opentelemetry.metrics._internal as _metrics_internal
 import opentelemetry.trace as _trace_mod
@@ -49,6 +51,53 @@ class TestSetupTelemetryDisabled:
 
         meter = get_meter("test")
         assert meter is not None
+
+
+@pytest.fixture(autouse=True)
+def reset_telemetry():
+    """Reset telemetry state between tests."""
+    import reddit_digest.telemetry as mod
+
+    mod._initialized = False
+    yield
+    mod._initialized = False
+
+
+@patch.dict(os.environ, {"OTEL_EXPORTER_OTLP_ENDPOINT": "http://localhost:4318"})
+def test_setup_telemetry_instruments_openai():
+    """OpenAIInstrumentor.instrument() must be called during setup_telemetry()."""
+    import reddit_digest.telemetry as tel
+
+    mock_instance = MagicMock()
+    mock_openai_cls = MagicMock(return_value=mock_instance)
+
+    patches = [
+        patch("opentelemetry.exporter.otlp.proto.http.trace_exporter.OTLPSpanExporter"),
+        patch(
+            "opentelemetry.exporter.otlp.proto.http.metric_exporter.OTLPMetricExporter"
+        ),
+        patch("opentelemetry.sdk.trace.export.BatchSpanProcessor"),
+        patch("opentelemetry.sdk.metrics.export.PeriodicExportingMetricReader"),
+        patch(
+            "opentelemetry.instrumentation.openai.OpenAIInstrumentor", mock_openai_cls
+        ),
+        patch("opentelemetry.instrumentation.httpx.HTTPXClientInstrumentor"),
+        patch("opentelemetry.instrumentation.sqlite3.SQLite3Instrumentor"),
+    ]
+
+    tel._initialized = False
+    with (
+        patches[0],
+        patches[1],
+        patches[2],
+        patches[3],
+        patches[4],
+        patches[5],
+        patches[6],
+    ):
+        tel.setup_telemetry()
+
+    mock_instance.instrument.assert_called_once()
 
 
 class TestSetupTelemetryEnabled:
