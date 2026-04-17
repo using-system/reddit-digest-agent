@@ -38,17 +38,17 @@ Automated benchmark system to compare LLM models for the reddit-digest-agent pip
 | anthropic/claude-opus-4.7 | $0.1070 | 100% | 4497ms | 7.5/10 | 0.7 | **0.6306** |
 | openai/gpt-4.1-nano | $0.0010 | 17% | 1619ms | 0.0/10 | 1.0 | **0.5434** |
 
-### Recommandation
+### Recommendation
 
-**Meilleur qualité/prix self-hostable : `google/gemma-3-12b-it`** — composite 0.9627 à $0.0009 par run, 100 % de JSON valide, latence ~4 s, qualité de résumé 7.1/10. Quasi à égalité avec les meilleurs modèles propriétaires tout en restant exécutable sur du matériel grand public.
+**Best quality/price self-hostable: `google/gemma-3-12b-it`** — composite 0.9627 at $0.0009 per run, 100% valid JSON, ~4s latency, 7.1/10 summary quality. Nearly on par with the top proprietary models while remaining runnable on consumer hardware.
 
 ### Key takeaways
 
-- **Best overall**: `openai/gpt-5.4-nano` — premier composite (0.9734), 100 % JSON, latence la plus basse (~1.5 s)
-- **Best self-hostable**: `google/gemma-3-12b-it` — meilleur compromis hostable : coût le plus bas de la famille hostable utile, latence raisonnable, qualité comparable aux variantes 27B / 31B sans le besoin de GPU haut de gamme
-- **Famille Gemma**: 4B / 12B / 27B / 4-31B sont toutes en haut du classement ; le 12B reste le sweet spot entre coût, latence et qualité
-- **Coût vs qualité**: les modèles à >$0.01 par run (Claude Opus 4.6/4.7, GPT-4o, GPT-4.1, GPT-5.4) n'apportent pas un gain qui justifie le prix — `claude-opus-4.7` est même le plus cher du panel ($0.107) sans dépasser les modèles légers
-- **Anomalies à surveiller**: `openai/gpt-oss-120b` (résumé évalué 0.0/10 par le judge malgré 100 % JSON), `openai/gpt-4.1-nano` (17 % JSON seulement), `microsoft/phi-4` (67 % JSON, MAE de scoring à 10.0)
+- **Best overall**: `openai/gpt-5.4-nano` — top composite (0.9734), 100% JSON, lowest latency (~1.5s)
+- **Best self-hostable**: `google/gemma-3-12b-it` — best hostable trade-off: lowest cost in the usable hostable family, reasonable latency, quality comparable to the 27B / 31B variants without needing high-end GPUs
+- **Gemma family**: 4B / 12B / 27B / 4-31B all sit at the top of the ranking; the 12B remains the sweet spot between cost, latency and quality
+- **Cost vs quality**: models above $0.01 per run (Claude Opus 4.6/4.7, GPT-4o, GPT-4.1, GPT-5.4) don't deliver a gain that justifies the price — `claude-opus-4.7` is even the most expensive of the panel ($0.107) without beating the light models
+- **Anomalies to watch**: `openai/gpt-oss-120b` (judge rated summary 0.0/10 despite 100% JSON), `openai/gpt-4.1-nano` (only 17% JSON), `microsoft/phi-4` (67% JSON, scoring MAE at 10.0)
 
 ### Composite score formula
 
