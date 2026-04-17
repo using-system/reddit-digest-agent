@@ -18,7 +18,7 @@ config:
   DIGEST_CRON: "0 8 * * *"
   DIGEST_LANGUAGE: fr
   OPENAI_BASE_URL: https://openrouter.ai/api/v1
-  LLM_MODEL: google/gemini-2.5-flash
+  LLM_MODEL: google/gemma-3-12b-it
 
 # Extra environment variables injected into the ConfigMap.
 # Use this to set any additional env var without modifying the chart
