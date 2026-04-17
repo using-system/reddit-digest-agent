@@ -195,6 +195,10 @@ Feedback reactions produce: `feedback.receive_reaction` â†’ `feedback.analyze` â
 
 A full Docker Compose stack (OTel Collector, Tempo, Prometheus, Grafana, Phoenix) is available for local development. See [`docker-compose/observability-stack/`](docker-compose/observability-stack/) for setup instructions.
 
+### Local LocalAI stack
+
+A Docker Compose stack that runs the agent against a self-hosted [LocalAI](https://localai.io/) server preloading `google/gemma-3-4b-it`, so the digest can be produced without any external LLM provider. See [`docker-compose/localai-stack/`](docker-compose/localai-stack/) for setup instructions.
+
 ## Deploy with Docker
 
 ```bash
