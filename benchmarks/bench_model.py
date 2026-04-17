@@ -20,6 +20,7 @@ from pathlib import Path
 from langchain_openai import ChatOpenAI
 
 from reddit_digest.models import RedditPost
+from reddit_digest.nodes.llm_utils import extract_json
 from reddit_digest.nodes.scorer import SCORE_PROMPT
 from reddit_digest.nodes.scorer import _build_post_block as scorer_build_block
 from reddit_digest.nodes.summarizer import PROMPT_TEMPLATE
@@ -33,18 +34,6 @@ DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 def load_fixture(path: str) -> dict:
     """Load golden dataset from JSON file."""
     return json.loads(Path(path).read_text())
-
-
-def _strip_code_fences(text: str) -> str:
-    """Strip markdown code fences and whitespace from LLM output."""
-    text = text.strip()
-    if text.startswith("```"):
-        # Remove opening fence (```json or ```)
-        first_newline = text.index("\n") if "\n" in text else len(text)
-        text = text[first_newline + 1 :]
-    if text.endswith("```"):
-        text = text[:-3]
-    return text.strip()
 
 
 def _extract_cost(response) -> float:
@@ -110,11 +99,11 @@ async def run_benchmark(
             total_tokens_completion += usage.get("completion_tokens", 0)
             total_cost += _extract_cost(response)
 
-            data = json.loads(_strip_code_fences(response.content))
+            data = extract_json(response.content)
             scores = data.get("scores", {})
             all_scores.update(scores)
             json_valid_count += 1
-        except json.JSONDecodeError as e:
+        except (ValueError, json.JSONDecodeError) as e:
             elapsed_ms = (time.monotonic() - start) * 1000
             latencies.append(elapsed_ms)
             errors.append(f"scorer/{subreddit}: JSON parse error: {e}")
@@ -141,11 +130,11 @@ async def run_benchmark(
             total_tokens_completion += usage.get("completion_tokens", 0)
             total_cost += _extract_cost(response)
 
-            data = json.loads(_strip_code_fences(response.content))
+            data = extract_json(response.content)
             summaries = data.get("summaries", {})
             all_summaries.update(summaries)
             json_valid_count += 1
-        except json.JSONDecodeError as e:
+        except (ValueError, json.JSONDecodeError) as e:
             elapsed_ms = (time.monotonic() - start) * 1000
             latencies.append(elapsed_ms)
             errors.append(f"summarizer/{subreddit}: JSON parse error: {e}")

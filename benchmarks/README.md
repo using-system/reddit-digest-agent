@@ -2,44 +2,53 @@
 
 Automated benchmark system to compare LLM models for the reddit-digest-agent pipeline. Tests each model's ability to score and summarize Reddit posts using the project's real prompts.
 
-## Latest Results (2026-04-12)
+## Latest Results (2026-04-17)
 
-> Run: [GitHub Actions #24308576896](https://github.com/using-system/reddit-digest-agent/actions/runs/24308576896)
-> 20 models tested across 7 providers via OpenRouter
+> Run: [GitHub Actions #24556985945](https://github.com/using-system/reddit-digest-agent/actions/runs/24556985945)
+> 25 models tested across 7 providers via OpenRouter
 > Judge: openai/gpt-4o
 
 ### Ranking
 
 | Model | Cost | JSON OK | Latency (avg) | Summaries | Scoring MAE | **Composite** |
 |-------|------|---------|---------------|-----------|-------------|---------------|
-| openai/gpt-4o-mini | $0.0014 | 100% | 1818ms | 7.8/10 | 1.1 | **0.9813** |
-| google/gemma-3-12b-it | $0.0005 | 100% | 4206ms | 8.1/10 | 1.4 | **0.9793** |
-| google/gemma-3-27b-it | $0.0012 | 100% | 5178ms | 8.0/10 | 1.3 | **0.9679** |
-| openai/gpt-4.1-mini | $0.0044 | 100% | 1852ms | 7.7/10 | 1.6 | **0.9638** |
-| mistralai/mistral-medium-3.1 | $0.0064 | 100% | 4052ms | 7.6/10 | 1.5 | **0.9391** |
-| mistralai/mistral-small-3.1-24b-instruct | $0.0037 | 100% | 5478ms | 7.4/10 | 1.3 | **0.938** |
-| anthropic/claude-haiku-4.5 | $0.0153 | 100% | 2788ms | 7.6/10 | 0.6 | **0.9078** |
-| openai/gpt-4.1 | $0.0183 | 100% | 2128ms | 7.9/10 | 1.1 | **0.9054** |
-| google/gemma-4-31b-it | $0.0016 | 100% | 18314ms | 7.9/10 | 0.9 | **0.8882** |
-| x-ai/grok-3-mini | $0.0048 | 100% | 15890ms | 7.5/10 | 1.3 | **0.8759** |
-| deepseek/deepseek-chat-v3-0324 | $0.0030 | 83% | 10821ms | 7.3/10 | 0.8 | **0.8588** |
-| deepseek/deepseek-v3.2 | $0.0046 | 100% | 6031ms | 7.3/10 | 45.6 | **0.8297** |
-| google/gemma-3-4b-it | $0.0005 | 100% | 4327ms | 1.0/10 | 1.2 | **0.7794** |
-| x-ai/grok-4-fast | $0.0043 | 100% | 4731ms | 1.0/10 | 0.7 | **0.7607** |
-| meta-llama/llama-4-maverick | $0.0041 | 50% | 8480ms | 7.5/10 | 10.0 | **0.7526** |
-| microsoft/phi-4 | $0.0009 | 33% | 4598ms | 7.9/10 | 10.0 | **0.7505** |
-| openai/gpt-4o | $0.0253 | 100% | 1424ms | 1.0/10 | 0.7 | **0.6844** |
-| anthropic/claude-opus-4.6 | $0.0775 | 100% | 5674ms | 7.7/10 | 0.7 | **0.6115** |
-| openai/gpt-4.1-nano | $0.0009 | 33% | 986ms | 1.0/10 | 10.0 | **0.577** |
-| meta-llama/llama-4-scout | $0.0019 | 17% | 5013ms | 1.0/10 | 10.0 | **0.4991** |
+| google/gemma-3-27b-it | $0.0012 | 100% | 3336ms | 7.9/10 | 1.1 | **0.9819** |
+| google/gemma-3-12b-it | $0.0005 | 100% | 4296ms | 7.9/10 | 1.4 | **0.9781** |
+| openai/gpt-4o-mini | $0.0015 | 100% | 2156ms | 7.6/10 | 0.9 | **0.9746** |
+| google/gemma-4-31b-it | $0.0016 | 100% | 8232ms | 8.0/10 | 1.0 | **0.9693** |
+| x-ai/grok-4-fast | $0.0042 | 100% | 3791ms | 7.9/10 | 1.5 | **0.966** |
+| meta-llama/llama-4-maverick | $0.0033 | 100% | 3196ms | 7.7/10 | 1.2 | **0.9657** |
+| openai/gpt-4.1-mini | $0.0045 | 100% | 3130ms | 7.8/10 | 1.5 | **0.9636** |
+| openai/gpt-5.4-nano | $0.0026 | 100% | 1951ms | 7.4/10 | 1.1 | **0.9606** |
+| mistralai/mistral-medium-3.1 | $0.0064 | 100% | 4736ms | 8.0/10 | 1.5 | **0.96** |
+| mistralai/mistral-small-3.1-24b-instruct | $0.0037 | 100% | 5644ms | 7.6/10 | 1.3 | **0.9506** |
+| meta-llama/llama-4-scout | $0.0022 | 100% | 7142ms | 7.6/10 | 1.3 | **0.9505** |
+| deepseek/deepseek-chat-v3-0324 | $0.0029 | 100% | 13163ms | 7.9/10 | 1.0 | **0.9432** |
+| anthropic/claude-haiku-4.5 | $0.0156 | 100% | 2846ms | 7.7/10 | 1.0 | **0.9271** |
+| openai/gpt-4.1 | $0.0192 | 100% | 2684ms | 7.8/10 | 1.1 | **0.9185** |
+| openai/gpt-5.4 | $0.0181 | 100% | 3066ms | 7.2/10 | 1.1 | **0.8947** |
+| openai/gpt-oss-120b | $0.0029 | 100% | 29202ms | 7.7/10 | 0.9 | **0.8794** |
+| google/gemma-3-4b-it | $0.0004 | 100% | 2302ms | 3.5/10 | 1.2 | **0.7919** |
+| microsoft/phi-4 | $0.0009 | 67% | 7588ms | 7.8/10 | 10.0 | **0.7686** |
+| deepseek/deepseek-v3.2 | $0.0027 | 100% | 12455ms | 3.8/10 | 1.3 | **0.7612** |
+| openai/gpt-4o | $0.0245 | 100% | 2358ms | 3.8/10 | 1.0 | **0.7252** |
+| anthropic/claude-opus-4.6 | $0.0778 | 100% | 5298ms | 7.5/10 | 0.7 | **0.7014** |
+| x-ai/grok-3-mini | $0.0057 | 100% | 30198ms | 3.7/10 | 1.5 | **0.6821** |
+| openai/gpt-oss-20b | $0.0013 | 67% | 10371ms | 3.8/10 | 0.7 | **0.6795** |
+| anthropic/claude-opus-4.7 | $0.1031 | 100% | 4006ms | 7.7/10 | 0.7 | **0.6283** |
+| openai/gpt-4.1-nano | $0.0011 | 17% | 1614ms | 3.8/10 | 10.0 | **0.4611** |
+
+### Recommendation
+
+**Best quality/price self-hostable: `google/gemma-3-12b-it`** — composite 0.9781 at $0.0005 per run, 100% valid JSON, ~4.3s latency, 7.9/10 summary quality. Second overall in the ranking, trailing only its bigger sibling `gemma-3-27b-it` while costing less than half and running on consumer hardware.
 
 ### Key takeaways
 
-- **Best overall**: `openai/gpt-4o-mini` — cheapest top-tier option with 100% JSON reliability and good summary quality
-- **Best self-hostable**: `google/gemma-3-12b-it` — nearly identical composite score (0.9793 vs 0.9813), highest summary quality (8.1/10), lowest cost ($0.0005), and can run on consumer hardware
-- **Gemma 3 family**: The 12B variant hits the sweet spot. The 27B is marginally worse and slower, the 4B drops dramatically in summary quality
-- **Cost vs quality**: Models costing >$0.01 per run (Claude Opus, GPT-4o, GPT-4.1) don't justify the price — cheaper models match or beat them on summary quality
-- **JSON reliability**: Most models achieve 100%. Notable failures: Llama 4 Scout (17%), Phi-4 (33%), GPT-4.1-nano (33%)
+- **Best overall**: `google/gemma-3-27b-it` — top composite (0.9819), 100% JSON, 7.9/10 summary, fast at ~3.3s and only $0.0012 per run
+- **Best self-hostable**: `google/gemma-3-12b-it` — same summary quality as the 27B (7.9/10), half the cost ($0.0005 vs $0.0012), runs on a single consumer GPU
+- **Gemma family dominates**: three Gemma 3 variants and the Gemma 4-31B fill 4 of the top 5 spots, beating every proprietary model except `gpt-4o-mini`
+- **Cost vs quality**: models above $0.01 per run (Claude Opus 4.6/4.7, GPT-4o, GPT-4.1, GPT-5.4) deliver no benefit over Gemma 3-12B; `claude-opus-4.7` is the most expensive of the panel ($0.103) and still ranks last on composite
+- **Anomalies to watch**: judge gave a 3.5–3.8/10 summary score to `gemma-3-4b-it`, `deepseek-v3.2`, `gpt-4o`, `grok-3-mini`, `gpt-oss-20b` and `gpt-4.1-nano` despite valid JSON — likely judge variance worth re-running. Hard failures: `gpt-4.1-nano` (17% JSON), `microsoft/phi-4` and `gpt-oss-20b` (67% JSON)
 
 ### Composite score formula
 
@@ -51,7 +60,7 @@ Each metric is min-max normalized across all models. For cost, latency, and MAE,
 
 ### From GitHub Actions (recommended)
 
-Go to **Actions > LLM Benchmark > Run workflow**. The default runs all 20 models. You can pass a custom JSON array of model IDs.
+Go to **Actions > LLM Benchmark > Run workflow**. The default runs all 25 models. You can pass a custom JSON array of model IDs.
 
 ### Locally
 

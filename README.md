@@ -131,15 +131,16 @@ All configuration is done via environment variables (`.env` file).
 
 ## Recommended model
 
-Based on our [benchmark of 20 models](benchmarks/README.md), we recommend **`google/gemma-3-12b-it`** as the default LLM:
+Based on our [benchmark of 25 models](benchmarks/README.md), we recommend **`google/gemma-3-12b-it`** as the default LLM for self-hosted deployments:
 
 | Model | Cost/run | JSON OK | Summary quality | Composite |
 |-------|----------|---------|-----------------|-----------|
-| openai/gpt-4o-mini | $0.0014 | 100% | 7.8/10 | 0.9813 |
-| **google/gemma-3-12b-it** | **$0.0005** | **100%** | **8.1/10** | **0.9793** |
-| google/gemma-3-27b-it | $0.0012 | 100% | 8.0/10 | 0.9679 |
+| google/gemma-3-27b-it | $0.0012 | 100% | 7.9/10 | 0.9819 |
+| **google/gemma-3-12b-it** | **$0.0005** | **100%** | **7.9/10** | **0.9781** |
+| openai/gpt-4o-mini | $0.0015 | 100% | 7.6/10 | 0.9746 |
+| google/gemma-4-31b-it | $0.0016 | 100% | 8.0/10 | 0.9693 |
 
-While `gpt-4o-mini` scores marginally higher on the composite metric, `gemma-3-12b-it` is the best self-hostable alternative: highest summary quality (8.1/10), lowest cost, 100% JSON reliability, and it runs on consumer hardware (12B parameters). It is the default value for `LLM_MODEL`.
+While `gemma-3-27b-it` tops the composite ranking, `gemma-3-12b-it` is the best self-hostable option: same summary quality (7.9/10), less than half the cost ($0.0005 vs $0.0012/run), 100% JSON reliability, and it runs on a single consumer GPU (12B parameters). It is the default value for `LLM_MODEL`.
 
 See [benchmarks/README.md](benchmarks/README.md) for the full ranking and methodology.
 
