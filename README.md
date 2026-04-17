@@ -135,13 +135,12 @@ Based on our [benchmark of 25 models](benchmarks/README.md), we recommend **`goo
 
 | Model | Cost/run | JSON OK | Summary quality | Composite |
 |-------|----------|---------|-----------------|-----------|
-| openai/gpt-5.4-nano | $0.0026 | 100% | 7.1/10 | 0.9734 |
-| openai/gpt-4o-mini | $0.0016 | 100% | 7.1/10 | 0.9715 |
-| google/gemma-4-31b-it | $0.0016 | 100% | 7.2/10 | 0.9649 |
-| google/gemma-3-27b-it | $0.0012 | 100% | 7.2/10 | 0.9632 |
-| **google/gemma-3-12b-it** | **$0.0009** | **100%** | **7.1/10** | **0.9627** |
+| google/gemma-3-27b-it | $0.0012 | 100% | 7.9/10 | 0.9819 |
+| **google/gemma-3-12b-it** | **$0.0005** | **100%** | **7.9/10** | **0.9781** |
+| openai/gpt-4o-mini | $0.0015 | 100% | 7.6/10 | 0.9746 |
+| google/gemma-4-31b-it | $0.0016 | 100% | 8.0/10 | 0.9693 |
 
-While `gpt-5.4-nano` and `gpt-4o-mini` lead the composite ranking, `gemma-3-12b-it` is the best self-hostable option: lowest cost ($0.0009/run), 100% JSON reliability, summary quality on par with the top proprietary models, and it runs on consumer hardware (12B parameters). It is the default value for `LLM_MODEL`.
+While `gemma-3-27b-it` tops the composite ranking, `gemma-3-12b-it` is the best self-hostable option: same summary quality (7.9/10), less than half the cost ($0.0005 vs $0.0012/run), 100% JSON reliability, and it runs on a single consumer GPU (12B parameters). It is the default value for `LLM_MODEL`.
 
 See [benchmarks/README.md](benchmarks/README.md) for the full ranking and methodology.
 
